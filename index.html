@@ -603,4 +603,1248 @@
       </button>
       <button class="btn btn-secondary" id="start-dodge-btn" onclick="selectMode('dodge')">
         <div class="mode-label">
-          <span class=
+          <span class="mode-icon">🏋️</span>
+          <div class="mode-text">
+            <span class="mode-name">Bodyweight Dodge</span>
+            <span class="mode-desc">Squat under bars · Full body movement</span>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:0.5"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 2 — CALIBRATION GUIDE
+═══════════════════════════════════════════════ -->
+<section id="screen-calibration" class="screen">
+  <div class="calibration-card">
+    <div class="calibration-header">
+      <span class="calibration-step-badge">Setup Guide</span>
+      <h2 id="calibration-title">Get Ready</h2>
+    </div>
+
+    <div class="device-instruction" id="device-instruction-laptop">
+      <div class="device-label">💻 Laptop / Desktop</div>
+      <p>Place your laptop on a table at chest height. Step back 6–8 feet until your entire upper body is clearly visible in the frame.</p>
+    </div>
+    <div class="device-instruction" id="device-instruction-mobile" style="display:none;">
+      <div class="device-label">📱 Mobile / Tablet</div>
+      <p>Prop your phone against a wall or stable surface at waist height. Step back 8–10 feet until your entire body is clearly visible in the frame.</p>
+    </div>
+
+    <div class="calibration-tips">
+      <div class="tip-row">
+        <div class="tip-icon">💡</div>
+        <p>Make sure the room is well-lit — face a window or lamp for best tracking accuracy.</p>
+      </div>
+      <div class="tip-row">
+        <div class="tip-icon">🎯</div>
+        <p id="tip-mode-specific">Keep your full upper body centered in the frame for punch detection.</p>
+      </div>
+      <div class="tip-row">
+        <div class="tip-icon">🔒</div>
+        <p>Your camera feed is processed entirely on your device. Nothing is uploaded or stored.</p>
+      </div>
+    </div>
+
+    <div class="calibration-actions">
+      <button class="btn btn-primary" id="start-camera-btn" onclick="goToPermissionOrGame()">
+        Skip Guide &amp; Start Camera
+      </button>
+      <button class="btn btn-ghost" id="back-to-menu-btn" onclick="showScreen('menu')">
+        ← Back to Menu
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 2b — CAMERA PERMISSION PROMPT
+═══════════════════════════════════════════════ -->
+<section id="screen-permission" class="screen">
+  <div class="permission-card">
+    <div class="permission-icon-wrap">📷</div>
+    <div>
+      <h2 style="margin-bottom:8px;">Camera Access Needed</h2>
+      <p>Kinetica uses your camera to track your body movements in real time. Your video never leaves your device.</p>
+    </div>
+    <div class="permission-steps">
+      <div class="perm-step">
+        <div class="perm-step-num">1</div>
+        <p>A browser popup will appear asking for camera permission — click <strong style="color:var(--text)">Allow</strong>.</p>
+      </div>
+      <div class="perm-step">
+        <div class="perm-step-num">2</div>
+        <p>Stand back so your full upper body (or full body for Dodge mode) is in frame.</p>
+      </div>
+      <div class="perm-step">
+        <div class="perm-step-num">3</div>
+        <p>The game starts automatically once your pose is detected. No calibration buttons needed.</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;font-size:16px;padding:18px 32px;" onclick="startGame()">
+      Allow Camera &amp; Start Game
+    </button>
+    <span class="permission-note">Your camera feed is processed locally. Nothing is uploaded or stored.</span>
+    <button class="btn btn-ghost" style="font-size:12px;padding:8px 16px;" onclick="showScreen('calibration')">← Back</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 3 — GAME ARENA
+═══════════════════════════════════════════════ -->
+<section id="screen-game" class="screen">
+  <!-- Video + canvas stack -->
+  <video id="video-feed" playsinline muted autoplay></video>
+  <canvas id="pose-canvas"></canvas>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="game-hud">
+    <div class="hud-top">
+      <div class="hud-pill" id="hud-score">
+        <div>
+          <div class="hud-label">Score</div>
+          <div class="hud-value" id="score-display">0</div>
+        </div>
+      </div>
+      <div class="hud-pill" id="hud-timer">
+        <div>
+          <div class="hud-label">Time</div>
+          <div class="hud-value" id="timer-display">60</div>
+        </div>
+      </div>
+    </div>
+    <div id="hud-mode-badge">Loading…</div>
+    <div class="hud-bottom">
+      <button class="btn btn-danger" id="quit-btn" onclick="quitGame()">Quit</button>
+    </div>
+  </div>
+
+  <!-- Combo flash text -->
+  <div id="combo-flash"></div>
+
+  <!-- Camera error overlay -->
+  <div id="cam-error">
+    <div class="cam-error-card">
+      <div class="cam-error-icon" id="cam-error-icon">🚫</div>
+      <div id="cam-error-title">Camera Access Denied</div>
+      <div id="cam-error-body">Kinetica needs your camera to track movements. Please grant access and try again.</div>
+      <div class="cam-error-fix">
+        <div class="cam-error-fix-label">How to fix this</div>
+        <ol id="cam-error-steps">
+          <li>Click the camera/lock icon in your browser's address bar.</li>
+          <li>Set Camera permission to <strong>Allow</strong>.</li>
+          <li>Refresh the page and try again.</li>
+        </ol>
+      </div>
+      <div class="cam-error-actions">
+        <button class="btn btn-primary" id="cam-error-try-again" onclick="retryCamera()">Try Again</button>
+        <button class="btn btn-ghost" onclick="showScreen('menu')" style="font-size:13px;">← Back to Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div class="loader-ring"></div>
+    <div id="loading-text">Initializing pose engine…</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 4 — GAME OVER
+═══════════════════════════════════════════════ -->
+<section id="screen-gameover" class="screen">
+  <div class="gameover-card">
+    <div class="gameover-mode-tag" id="gameover-mode-tag">Rhythm Boxer</div>
+    <h2>Session Complete</h2>
+    <div class="gameover-score-wrapper">
+      <div class="gameover-score-label">Final Score</div>
+      <div id="final-score">0</div>
+      <div id="final-rank">Keep pushing! 💪</div>
+    </div>
+    <div class="gameover-stats">
+      <div class="stat-item">
+        <div class="stat-label">Hits</div>
+        <div class="stat-value good" id="stat-hits">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Misses</div>
+        <div class="stat-value bad" id="stat-misses">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Accuracy</div>
+        <div class="stat-value" id="stat-accuracy">—</div>
+      </div>
+    </div>
+    <div class="gameover-actions">
+      <button class="btn btn-primary" onclick="replayGame()">Play Again</button>
+      <button class="btn btn-ghost" onclick="showScreen('menu')">← Main Menu</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     JAVASCRIPT ENGINE
+═══════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
+const State = {
+  mode: null,          // 'boxer' | 'dodge'
+  score: 0,
+  hits: 0,
+  misses: 0,
+  timeLeft: 60,
+  running: false,
+  poseResults: null,
+  isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent),
+
+  // Pose landmark mirror coords (normalized 0–1, already flipped for display)
+  landmarks: null,
+};
+
+// ──────────────────────────────────────────────
+// SCREEN MANAGEMENT
+// ──────────────────────────────────────────────
+const screens = {
+  menu:        document.getElementById('screen-menu'),
+  calibration: document.getElementById('screen-calibration'),
+  permission:  document.getElementById('screen-permission'),
+  game:        document.getElementById('screen-game'),
+  gameover:    document.getElementById('screen-gameover'),
+};
+
+function showScreen(name) {
+  Object.keys(screens).forEach(k => screens[k].classList.remove('active'));
+  screens[name].classList.add('active');
+}
+
+// ──────────────────────────────────────────────
+// MODE SELECTION
+// ──────────────────────────────────────────────
+function selectMode(mode) {
+  State.mode = mode;
+
+  // Populate calibration screen
+  const laptopInstr  = document.getElementById('device-instruction-laptop');
+  const mobileInstr  = document.getElementById('device-instruction-mobile');
+  const tipMode      = document.getElementById('tip-mode-specific');
+  const calTitle     = document.getElementById('calibration-title');
+
+  if (State.isMobile) {
+    laptopInstr.style.display = 'none';
+    mobileInstr.style.display = 'block';
+  } else {
+    laptopInstr.style.display = 'block';
+    mobileInstr.style.display = 'none';
+  }
+
+  if (mode === 'boxer') {
+    calTitle.textContent = 'Rhythm Boxer Setup';
+    tipMode.textContent  = 'Keep your full upper body centered so both wrists are always visible.';
+  } else {
+    calTitle.textContent = 'Bodyweight Dodge Setup';
+    tipMode.textContent  = 'Make sure your full body fits in frame — you\'ll need to squat low to dodge bars.';
+  }
+
+  showScreen('calibration');
+}
+
+// ──────────────────────────────────────────────
+// CANVAS & VIDEO ELEMENTS
+// ──────────────────────────────────────────────
+const video     = document.getElementById('video-feed');
+const poseCvs   = document.getElementById('pose-canvas');
+const gameCvs   = document.getElementById('game-canvas');
+const poseCtx   = poseCvs.getContext('2d');
+const gameCtx   = gameCvs.getContext('2d');
+
+function resizeCanvases() {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  poseCvs.width  = gameCvs.width  = W;
+  poseCvs.height = gameCvs.height = H;
+}
+
+window.addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+// ──────────────────────────────────────────────
+// MEDIAPIPE POSE
+// ──────────────────────────────────────────────
+let poseEngine = null;
+let cameraEngine = null;
+let poseReady  = false;
+
+function initPose() {
+  // Create and configure the engine. We skip .initialize() which hangs
+  // on many CDN builds. The engine self-loads on the first .send() call.
+  poseEngine = new Pose({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+  });
+
+  poseEngine.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    smoothSegmentation: false,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  });
+
+  poseEngine.onResults((results) => {
+    State.poseResults = results;
+    if (results.poseLandmarks) {
+      State.landmarks = results.poseLandmarks.map(lm => ({
+        x: 1 - lm.x,
+        y: lm.y,
+        z: lm.z,
+        visibility: lm.visibility,
+      }));
+    } else {
+      State.landmarks = null;
+    }
+    poseReady = true;
+  });
+}
+
+// ──────────────────────────────────────────────
+// PERMISSION FLOW
+// ──────────────────────────────────────────────
+
+// Called from calibration screen's "Start Camera" button.
+// Check if permission is already granted — if so skip the prompt screen.
+async function goToPermissionOrGame() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showScreen('game');
+    showCamError('unsupported');
+    return;
+  }
+  try {
+    const status = await navigator.permissions.query({ name: 'camera' });
+    if (status.state === 'granted') {
+      // Already allowed — go straight to game
+      startGame();
+    } else {
+      // 'prompt' or 'denied' — show our permission explainer first
+      showScreen('permission');
+    }
+  } catch (_) {
+    // permissions.query not supported in this browser — show explainer anyway
+    showScreen('permission');
+  }
+}
+
+// Retry after fixing permissions — re-query state to give helpful feedback
+async function retryCamera() {
+  document.getElementById('cam-error').classList.remove('visible');
+  startGame();
+}
+
+// Show a differentiated error message depending on what went wrong
+function showCamError(type) {
+  showLoading(false);
+  const iconEl    = document.getElementById('cam-error-icon');
+  const titleEl   = document.getElementById('cam-error-title');
+  const bodyEl    = document.getElementById('cam-error-body');
+  const stepsEl   = document.getElementById('cam-error-steps');
+  const retryBtn  = document.getElementById('cam-error-try-again');
+
+  if (type === 'denied') {
+    iconEl.textContent  = '🚫';
+    titleEl.textContent = 'Camera Access Blocked';
+    bodyEl.textContent  = 'Your browser has blocked camera access for this page. You need to grant permission before the game can track your movements.';
+    stepsEl.innerHTML   =
+      '<li>Click the <strong style="color:var(--text)">camera icon</strong> or <strong style="color:var(--text)">lock icon</strong> in your browser\'s address bar.</li>' +
+      '<li>Find the Camera setting and switch it to <strong style="color:var(--text)">Allow</strong>.</li>' +
+      '<li>Press the <strong style="color:var(--text)">Try Again</strong> button below — no refresh needed.</li>';
+    retryBtn.classList.add('show');
+
+  } else if (type === 'notfound') {
+    iconEl.textContent  = '🔍';
+    titleEl.textContent = 'No Camera Detected';
+    bodyEl.textContent  = 'Kinetica couldn\'t find a camera on this device. Make sure one is connected and not in use by another app.';
+    stepsEl.innerHTML   =
+      '<li>Check that a webcam is physically connected and powered on.</li>' +
+      '<li>Close any other apps that might be using the camera (video calls, OBS, etc.).</li>' +
+      '<li>Try plugging the camera into a different USB port, then press <strong style="color:var(--text)">Try Again</strong>.</li>';
+    retryBtn.classList.add('show');
+
+  } else if (type === 'inuse') {
+    iconEl.textContent  = '⚠️';
+    titleEl.textContent = 'Camera Already In Use';
+    bodyEl.textContent  = 'Another application is currently using your camera. Close it and try again.';
+    stepsEl.innerHTML   =
+      '<li>Close any video-call apps (Zoom, Teams, Meet, FaceTime, etc.).</li>' +
+      '<li>Close any browser tabs that might be using the camera.</li>' +
+      '<li>Press <strong style="color:var(--text)">Try Again</strong> below.</li>';
+    retryBtn.classList.add('show');
+
+  } else if (type === 'unsupported') {
+    iconEl.textContent  = '🌐';
+    titleEl.textContent = 'Browser Not Supported';
+    bodyEl.textContent  = 'Your browser doesn\'t support camera access. Kinetica works best in Chrome, Edge, or Firefox on a modern device.';
+    stepsEl.innerHTML   =
+      '<li>Open this page in <strong style="color:var(--text)">Google Chrome</strong> or <strong style="color:var(--text)">Microsoft Edge</strong>.</li>' +
+      '<li>Make sure your browser is up to date.</li>' +
+      '<li>If on iOS, use Safari 14.5 or later.</li>';
+    retryBtn.classList.remove('show');
+
+  } else {
+    // Generic / unknown error
+    iconEl.textContent  = '❌';
+    titleEl.textContent = 'Camera Error';
+    bodyEl.textContent  = 'Something went wrong while accessing your camera. Please try the steps below.';
+    stepsEl.innerHTML   =
+      '<li>Refresh the page and allow camera access when prompted.</li>' +
+      '<li>Make sure no other app is using the camera.</li>' +
+      '<li>Check your browser\'s site settings and ensure Camera is set to <strong style="color:var(--text)">Allow</strong>.</li>';
+    retryBtn.classList.add('show');
+  }
+
+  document.getElementById('cam-error').classList.add('visible');
+}
+
+// ──────────────────────────────────────────────
+// WEBCAM STARTUP
+// ──────────────────────────────────────────────
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showCamError('unsupported');
+    return false;
+  }
+
+  try {
+    const constraints = {
+      video: {
+        width:  { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'user',
+      },
+      audio: false,
+    };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await new Promise(res => { video.onloadedmetadata = res; });
+    await video.play();
+    return true;
+  } catch (err) {
+    console.error('Camera error:', err.name, err.message);
+    // Map DOMException names to our error types
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      showCamError('denied');
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      showCamError('notfound');
+    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      showCamError('inuse');
+    } else if (err.name === 'NotSupportedError' || err.name === 'TypeError') {
+      showCamError('unsupported');
+    } else {
+      showCamError('generic');
+    }
+    return false;
+  }
+}
+
+// ──────────────────────────────────────────────
+// START GAME FLOW
+// ──────────────────────────────────────────────
+let gameTimerInterval = null;
+
+async function startGame() {
+  showScreen('game');
+  setLoadingText('Requesting camera access…');
+  showLoading(true);
+
+  const camOk = await startCamera();
+  if (!camOk) {
+    showLoading(false);
+    document.getElementById('cam-error').classList.add('visible');
+    return;
+  }
+
+  setLoadingText('Loading AI pose engine…');
+  // initPose is now synchronous — just sets up the engine object
+  initPose();
+
+  // Start the camera utility which pumps frames into MediaPipe
+  cameraEngine = new Camera(video, {
+    onFrame: async () => {
+      if (poseEngine) {
+        try { await poseEngine.send({ image: video }); } catch(e) {}
+      }
+    },
+    width: 1280,
+    height: 720,
+  });
+  await cameraEngine.start();
+
+  // Wait for first pose result (engine self-loads on first send).
+  // Give it up to 12 seconds; after that proceed anyway so game isn't stuck.
+  setLoadingText('Detecting your pose…');
+  await new Promise(res => {
+    const deadline = Date.now() + 12000;
+    const check = () => {
+      if (State.poseResults || Date.now() > deadline) { res(); return; }
+      setTimeout(check, 120);
+    };
+    check();
+  });
+
+  showLoading(false);
+  resetGameState();
+  State.running = true;
+  document.getElementById('hud-mode-badge').textContent =
+    State.mode === 'boxer' ? '🥊  Rhythm Boxer' : '🏋️  Bodyweight Dodge';
+
+  // Start 60-second countdown
+  clearInterval(gameTimerInterval);
+  gameTimerInterval = setInterval(() => {
+    if (!State.running) return;
+    State.timeLeft -= 1;
+    updateHUD();
+
+    const timerEl = document.getElementById('hud-timer');
+    if (State.timeLeft <= 10) timerEl.classList.add('danger');
+    else timerEl.classList.remove('danger');
+
+    if (State.timeLeft <= 0) {
+      clearInterval(gameTimerInterval);
+      endGame();
+    }
+  }, 1000);
+
+  // Initialise game objects for the selected mode
+  if (State.mode === 'boxer') initBoxerMode();
+  else initDodgeMode();
+
+  // Kick off render loop
+  requestAnimationFrame(gameLoop);
+}
+
+function resetGameState() {
+  State.score     = 0;
+  State.hits      = 0;
+  State.misses    = 0;
+  State.timeLeft  = 60;
+  State.running   = true;
+  updateHUD();
+  document.getElementById('hud-timer').classList.remove('danger');
+}
+
+function updateHUD() {
+  document.getElementById('score-display').textContent = State.score;
+  document.getElementById('timer-display').textContent = Math.max(0, State.timeLeft);
+}
+
+// ──────────────────────────────────────────────
+// SKELETAL RENDERING
+// ──────────────────────────────────────────────
+
+// MediaPipe Pose landmark indices
+const LM = {
+  NOSE:         0,
+  L_SHOULDER:   11, R_SHOULDER: 12,
+  L_ELBOW:      13, R_ELBOW:    14,
+  L_WRIST:      15, R_WRIST:    16,
+  L_HIP:        23, R_HIP:      24,
+  L_KNEE:       25, R_KNEE:     26,
+  L_ANKLE:      27, R_ANKLE:    28,
+};
+
+const CONNECTIONS = [
+  [LM.L_SHOULDER, LM.R_SHOULDER],
+  [LM.L_SHOULDER, LM.L_ELBOW],
+  [LM.L_ELBOW,    LM.L_WRIST],
+  [LM.R_SHOULDER, LM.R_ELBOW],
+  [LM.R_ELBOW,    LM.R_WRIST],
+  [LM.L_SHOULDER, LM.L_HIP],
+  [LM.R_SHOULDER, LM.R_HIP],
+  [LM.L_HIP,      LM.R_HIP],
+  [LM.L_HIP,      LM.L_KNEE],
+  [LM.L_KNEE,     LM.L_ANKLE],
+  [LM.R_HIP,      LM.R_KNEE],
+  [LM.R_KNEE,     LM.R_ANKLE],
+];
+
+function drawSkeleton() {
+  const W = poseCvs.width;
+  const H = poseCvs.height;
+  poseCtx.clearRect(0, 0, W, H);
+
+  if (!State.landmarks) return;
+  const lm = State.landmarks;
+
+  // Draw connections
+  poseCtx.save();
+  CONNECTIONS.forEach(([a, b]) => {
+    const pa = lm[a], pb = lm[b];
+    if (!pa || !pb) return;
+    if ((pa.visibility || 0) < 0.35 || (pb.visibility || 0) < 0.35) return;
+
+    const ax = pa.x * W, ay = pa.y * H;
+    const bx = pb.x * W, by = pb.y * H;
+
+    // Gradient per bone
+    const grad = poseCtx.createLinearGradient(ax, ay, bx, by);
+    grad.addColorStop(0, 'rgba(124,58,237,0.85)');
+    grad.addColorStop(1, 'rgba(6,182,212,0.85)');
+
+    poseCtx.beginPath();
+    poseCtx.moveTo(ax, ay);
+    poseCtx.lineTo(bx, by);
+    poseCtx.strokeStyle = grad;
+    poseCtx.lineWidth = 2.5;
+    poseCtx.lineCap = 'round';
+    poseCtx.shadowColor = 'rgba(157,92,246,0.7)';
+    poseCtx.shadowBlur = 8;
+    poseCtx.stroke();
+  });
+
+  // Draw landmark dots
+  const KEY_JOINTS = [LM.NOSE, LM.L_WRIST, LM.R_WRIST,
+    LM.L_SHOULDER, LM.R_SHOULDER, LM.L_HIP, LM.R_HIP,
+    LM.L_KNEE, LM.R_KNEE, LM.L_ANKLE, LM.R_ANKLE];
+
+  KEY_JOINTS.forEach(idx => {
+    const p = lm[idx];
+    if (!p || (p.visibility || 0) < 0.35) return;
+    const px = p.x * W, py = p.y * H;
+    const isWrist = idx === LM.L_WRIST || idx === LM.R_WRIST;
+
+    poseCtx.beginPath();
+    poseCtx.arc(px, py, isWrist ? 7 : 4, 0, Math.PI * 2);
+    poseCtx.fillStyle = isWrist ? 'rgba(255,255,255,0.95)' : 'rgba(157,92,246,0.9)';
+    poseCtx.shadowColor = isWrist ? 'rgba(255,255,255,0.9)' : 'rgba(124,58,237,0.8)';
+    poseCtx.shadowBlur  = isWrist ? 14 : 6;
+    poseCtx.fill();
+
+    if (isWrist) {
+      // Outer ring for wrists (the hitting landmarks)
+      poseCtx.beginPath();
+      poseCtx.arc(px, py, 12, 0, Math.PI * 2);
+      poseCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+      poseCtx.lineWidth = 1.5;
+      poseCtx.shadowBlur = 0;
+      poseCtx.stroke();
+    }
+  });
+  poseCtx.restore();
+}
+
+// ──────────────────────────────────────────────
+// PARTICLE SYSTEM
+// ──────────────────────────────────────────────
+const particles = [];
+
+function spawnParticles(x, y, color) {
+  const COUNT = 18;
+  for (let i = 0; i < COUNT; i++) {
+    const angle = (Math.PI * 2 / COUNT) * i + Math.random() * 0.5;
+    const speed = 3 + Math.random() * 5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      radius: 2.5 + Math.random() * 3,
+      alpha: 1,
+      color,
+      decay: 0.035 + Math.random() * 0.02,
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.18; // gravity
+    p.vx *= 0.97;
+    p.alpha -= p.decay;
+    if (p.alpha <= 0) { particles.splice(i, 1); }
+  }
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    gameCtx.save();
+    gameCtx.globalAlpha = p.alpha;
+    gameCtx.beginPath();
+    gameCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    gameCtx.fillStyle = p.color;
+    gameCtx.shadowColor = p.color;
+    gameCtx.shadowBlur  = 10;
+    gameCtx.fill();
+    gameCtx.restore();
+  });
+}
+
+// ──────────────────────────────────────────────
+// COMBO FLASH
+// ──────────────────────────────────────────────
+let comboFlashTimeout = null;
+const comboFlashEl = document.getElementById('combo-flash');
+
+function showComboFlash(text, type) {
+  comboFlashEl.textContent = text;
+  comboFlashEl.className = '';
+  void comboFlashEl.offsetWidth; // reflow
+  comboFlashEl.classList.add(type);
+  clearTimeout(comboFlashTimeout);
+  comboFlashTimeout = setTimeout(() => {
+    comboFlashEl.style.transition = 'opacity 0.4s ease';
+    comboFlashEl.style.opacity = '0';
+    setTimeout(() => {
+      comboFlashEl.className = '';
+      comboFlashEl.style.opacity = '';
+      comboFlashEl.style.transition = '';
+    }, 400);
+  }, 500);
+}
+
+// ──────────────────────────────────────────────
+// RHYTHM BOXER MODE
+// ──────────────────────────────────────────────
+
+const boxerTargets = [];
+let boxerSpawnInterval = null;
+let boxerLastHitCooldown = {}; // targetId -> timestamp
+
+let _boxerIdCounter = 0;
+function spawnBoxerTarget() {
+  const W = gameCvs.width;
+  const H = gameCvs.height;
+
+  // Distribute targets across a safe zone, avoiding edges
+  const margin = 0.15;
+  const x = (margin + Math.random() * (1 - margin * 2)) * W;
+  const y = (0.15 + Math.random() * 0.55) * H;
+
+  boxerTargets.push({
+    id:          _boxerIdCounter++,
+    x, y,
+    radius:      18,          // starts small
+    maxRadius:   W * 0.11,    // grows to this
+    growRate:    W * 0.0018,  // px per frame growth
+    hit:         false,
+    hitAlpha:    0,           // for fade-out after hit
+    side:        Math.random() < 0.5 ? 'left' : 'right',
+    age:         0,
+    spawnedAt:   performance.now(),
+  });
+}
+
+function initBoxerMode() {
+  boxerTargets.length = 0;
+  Object.keys(boxerLastHitCooldown).forEach(k => delete boxerLastHitCooldown[k]);
+  // Spawn first target immediately
+  spawnBoxerTarget();
+  // Then spawn on a rhythm, stagger so 1-2 targets are usually on screen
+  clearInterval(boxerSpawnInterval);
+  boxerSpawnInterval = setInterval(() => {
+    if (!State.running) return;
+    if (boxerTargets.filter(t => !t.hit).length < 3) spawnBoxerTarget();
+  }, 1100);
+}
+
+function updateBoxerMode() {
+  const W = gameCvs.width;
+  const H = gameCvs.height;
+
+  // Get wrist pixel coords
+  let lWrist = null, rWrist = null;
+  if (State.landmarks) {
+    const lwLm = State.landmarks[LM.L_WRIST];
+    const rwLm = State.landmarks[LM.R_WRIST];
+    if (lwLm && (lwLm.visibility || 0) > 0.4) {
+      lWrist = { x: lwLm.x * W, y: lwLm.y * H };
+    }
+    if (rwLm && (rwLm.visibility || 0) > 0.4) {
+      rWrist = { x: rwLm.x * W, y: rwLm.y * H };
+    }
+  }
+
+  for (let i = boxerTargets.length - 1; i >= 0; i--) {
+    const t = boxerTargets[i];
+    t.age++;
+
+    if (!t.hit) {
+      t.radius += t.growRate;
+
+      // Check if max radius exceeded (miss)
+      if (t.radius >= t.maxRadius) {
+        State.misses++;
+        State.score = Math.max(0, State.score - 15);
+        showComboFlash('MISS!', 'flash-collision');
+        updateHUD();
+        boxerTargets.splice(i, 1);
+        continue;
+      }
+
+      // Collision check with wrists
+      const checkWrist = (wrist, wristName) => {
+        if (!wrist) return;
+        const dist = Math.hypot(wrist.x - t.x, wrist.y - t.y);
+        if (dist < t.radius + 14) {
+          // Cooldown to prevent multiple hits from same target
+          const key = `${t.id}-${wristName}`;
+          const now = performance.now();
+          if (!boxerLastHitCooldown[key] || now - boxerLastHitCooldown[key] > 400) {
+            boxerLastHitCooldown[key] = now;
+            t.hit = true;
+            t.hitAlpha = 1;
+            State.hits++;
+            State.score += 100;
+            updateHUD();
+            spawnParticles(t.x, t.y, wristName === 'left' ? '#c084fc' : '#22d3ee');
+            showComboFlash('+100', 'flash-hit');
+          }
+        }
+      };
+      checkWrist(lWrist, 'left');
+      checkWrist(rWrist, 'right');
+
+    } else {
+      // Fade out after hit
+      t.hitAlpha -= 0.05;
+      if (t.hitAlpha <= 0) {
+        boxerTargets.splice(i, 1);
+        // Spawn replacement
+        if (State.running && boxerTargets.filter(bt => !bt.hit).length < 2) {
+          spawnBoxerTarget();
+        }
+      }
+    }
+  }
+}
+
+function drawBoxerMode() {
+  const W = gameCvs.width;
+  const H = gameCvs.height;
+
+  boxerTargets.forEach(t => {
+    gameCtx.save();
+    const progress = t.radius / t.maxRadius; // 0 → 1
+
+    if (!t.hit) {
+      // Pulse outer ring
+      const outerAlpha = 0.08 + 0.12 * Math.sin(t.age * 0.12);
+
+      // Outer glow ring
+      gameCtx.beginPath();
+      gameCtx.arc(t.x, t.y, t.radius + 10, 0, Math.PI * 2);
+      gameCtx.strokeStyle = t.side === 'left'
+        ? `rgba(192,132,252,${outerAlpha})`
+        : `rgba(34,211,238,${outerAlpha})`;
+      gameCtx.lineWidth = 12;
+      gameCtx.stroke();
+
+      // Main circle border — colour shifts as it grows (urgency)
+      const r = Math.round(124 + progress * 100);
+      const g = Math.round(58  + progress * 0);
+      const b = Math.round(237 - progress * 100);
+      const baseColor  = t.side === 'left'
+        ? `rgba(${r},${g},${b},0.9)`
+        : `rgba(6,182,${212 - Math.round(progress * 80)},0.9)`;
+      const glowColor  = t.side === 'left'
+        ? `rgba(192,132,252,0.5)`
+        : `rgba(34,211,238,0.5)`;
+
+      // Circular progress fill (shows how much time is left)
+      const fillAlpha = 0.06 + progress * 0.1;
+      const fillColor = t.side === 'left'
+        ? `rgba(124,58,237,${fillAlpha})`
+        : `rgba(6,182,212,${fillAlpha})`;
+
+      gameCtx.beginPath();
+      gameCtx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+      gameCtx.fillStyle = fillColor;
+      gameCtx.fill();
+
+      // Border circle
+      gameCtx.beginPath();
+      gameCtx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+      gameCtx.strokeStyle = baseColor;
+      gameCtx.lineWidth   = 2.5 - progress * 0.5;
+      gameCtx.shadowColor = glowColor;
+      gameCtx.shadowBlur  = 18;
+      gameCtx.stroke();
+
+      // Inner crosshair
+      const cSize = Math.min(10, t.radius * 0.25);
+      gameCtx.beginPath();
+      gameCtx.moveTo(t.x - cSize, t.y);
+      gameCtx.lineTo(t.x + cSize, t.y);
+      gameCtx.moveTo(t.x, t.y - cSize);
+      gameCtx.lineTo(t.x, t.y + cSize);
+      gameCtx.strokeStyle = `rgba(255,255,255,${0.3 + progress * 0.2})`;
+      gameCtx.lineWidth   = 1.5;
+      gameCtx.shadowBlur  = 0;
+      gameCtx.stroke();
+
+      // Hand indicator label
+      if (t.radius > 36) {
+        gameCtx.font         = `bold ${Math.round(9 + progress * 5)}px sans-serif`;
+        gameCtx.fillStyle    = `rgba(255,255,255,${0.4 + progress * 0.4})`;
+        gameCtx.textAlign    = 'center';
+        gameCtx.textBaseline = 'middle';
+        gameCtx.shadowBlur   = 0;
+        gameCtx.fillText(t.side === 'left' ? 'L' : 'R', t.x, t.y);
+      }
+
+    } else {
+      // Hit burst ring expand + fade
+      const expandR = t.radius + (1 - t.hitAlpha) * 60;
+      gameCtx.beginPath();
+      gameCtx.arc(t.x, t.y, expandR, 0, Math.PI * 2);
+      gameCtx.strokeStyle = t.side === 'left'
+        ? `rgba(192,132,252,${t.hitAlpha * 0.6})`
+        : `rgba(34,211,238,${t.hitAlpha * 0.6})`;
+      gameCtx.lineWidth   = 3;
+      gameCtx.shadowColor = t.side === 'left' ? '#c084fc' : '#22d3ee';
+      gameCtx.shadowBlur  = 20;
+      gameCtx.stroke();
+    }
+    gameCtx.restore();
+  });
+}
+
+// ──────────────────────────────────────────────
+// BODYWEIGHT DODGE MODE
+// ──────────────────────────────────────────────
+
+const dodgeBars = [];
+let dodgeSpawnInterval = null;
+let _dodgeIdCounter    = 0;
+
+// Landmark to track: average of shoulders and nose
+function getPlayerHeightNorm() {
+  if (!State.landmarks) return 0.4; // default upper third
+  const nose = State.landmarks[LM.NOSE];
+  const ls   = State.landmarks[LM.L_SHOULDER];
+  const rs   = State.landmarks[LM.R_SHOULDER];
+  const visible = [nose, ls, rs].filter(l => l && (l.visibility || 0) > 0.35);
+  if (visible.length === 0) return 0.4;
+  return visible.reduce((sum, l) => sum + l.y, 0) / visible.length;
+}
+
+function spawnDodgeBar() {
+  const W = gameCvs.width;
+  const H = gameCvs.height;
+
+  // Bar comes from either left or right
+  const fromLeft = Math.random() < 0.5;
+  // Bar height (Y position) — random in the lower-mid area
+  // Low bars require squatting; higher bars are free passes
+  const isLow = Math.random() < 0.65; // 65% chance of a low bar (challenge)
+
+  // Low bar: player must squat. The bar's top edge is at 55-70% height
+  // High bar: top edge at 20-35% height (easy to duck under by default)
+  const barTopNorm = isLow
+    ? (0.52 + Math.random() * 0.18)
+    : (0.18 + Math.random() * 0.14);
+
+  const barHeightPx = isLow ? 36 + Math.random() * 24 : 28 + Math.random() * 16;
+  const speed       = (W * 0.005) + Math.random() * (W * 0.003);
+
+  dodgeBars.push({
+    id:         _dodgeIdCounter++,
+    x:          fromLeft ? -120 : W + 120,
+    y:          barTopNorm * H,
+    height:     barHeightPx,
+    width:      W * 0.28 + Math.random() * W * 0.1,
+    speed:      fromLeft ? speed : -speed,
+    fromLeft,
+    isLow,
+    hit:        false,
+    hitFlash:   0,
+    passed:     false,
+  });
+}
+
+function initDodgeMode() {
+  dodgeBars.length = 0;
+  spawnDodgeBar();
+  clearInterval(dodgeSpawnInterval);
+  dodgeSpawnInterval = setInterval(() => {
+    if (!State.running) return;
+    if (dodgeBars.length < 3) spawnDodgeBar();
+  }, 1600);
+}
+
+function updateDodgeMode() {
+  const W   = gameCvs.width;
+  const H   = gameCvs.height;
+  const playerY = getPlayerHeightNorm() * H;
+
+  for (let i = dodgeBars.length - 1; i >= 0; i--) {
+    const bar = dodgeBars[i];
+    bar.x += bar.speed;
+
+    // Remove off-screen bars
+    if ((bar.fromLeft && bar.x > W + 200) || (!bar.fromLeft && bar.x < -200)) {
+      if (!bar.hit) {
+        // Player dodged successfully (or bar wasn't low enough to matter)
+        if (bar.isLow && !bar.passed) {
+          State.score += 30;
+          State.hits++;
+          updateHUD();
+        }
+      }
+      dodgeBars.splice(i, 1);
+      continue;
+    }
+
+    if (bar.hitFlash > 0) bar.hitFlash -= 0.05;
+
+    // Collision: only check when bar is on screen center-ish
+    // We check if the player's tracking point Y is ABOVE the bar's top (i.e., not ducked)
+    // Bar occupies [bar.y, bar.y + bar.height]
+    // Player must get their Y coordinate BELOW bar.y (i.e., squat so landmarks drop below bar top)
+    if (bar.isLow && !bar.hit && !bar.passed) {
+      const barScreenX = bar.x;
+      const barRight   = bar.x + bar.width;
+      const halfW      = W / 2;
+      const barOnScreen = barScreenX < halfW + W * 0.25 && barRight > halfW - W * 0.25;
+
+      if (barOnScreen) {
+        // Is player in collision zone?
+        const playerInBarY = playerY < bar.y + bar.height && playerY > bar.y - 60;
+
+        if (playerInBarY) {
+          // Collision!
+          if (!bar.hit) {
+            bar.hit       = true;
+            bar.hitFlash  = 1;
+            State.misses++;
+            State.score   = Math.max(0, State.score - 50);
+            updateHUD();
+            showComboFlash('HIT! -50', 'flash-collision');
+          }
+        } else if (playerY >= bar.y + bar.height && !bar.hit) {
+          // Player ducked below bar's bottom edge — count as successful dodge
+          if (!bar.passed) {
+            bar.passed   = true;
+            State.score += 30;
+            State.hits++;
+            updateHUD();
+            showComboFlash('DODGE! +30', 'flash-hit-cyan');
+          }
+        }
+      }
+    }
+  }
+}
+
+function drawDodgeMode() {
+  const W = gameCvs.width;
+  const H = gameCvs.height;
+  const playerY = getPlayerHeightNorm() * H;
+
+  // Draw subtle horizontal guide line for player
+  gameCtx.save();
+  gameCtx.beginPath();
+  gameCtx.setLineDash([6, 8]);
+  gameCtx.moveTo(0, playerY);
+  gameCtx.lineTo(W, playerY);
+  gameCtx.strokeStyle = 'rgba(255,255,255,0.12)';
+  gameCtx.lineWidth   = 1;
+  gameCtx.stroke();
+  gameCtx.setLineDash([]);
+
+  // Draw player height indicator dot
+  gameCtx.beginPath();
+  gameCtx.arc(W / 2, playerY, 8, 0, Math.PI * 2);
+  gameCtx.fillStyle   = 'rgba(255,255,255,0.7)';
+  gameCtx.shadowColor = '#fff';
+  gameCtx.shadowBlur  = 12;
+  gameCtx.fill();
+
+  gameCtx.restore();
+
+  // Draw each bar
+  dodgeBars.forEach(bar => {
+    gameCtx.save();
+
+    const isColliding = bar.hitFlash > 0;
+    const baseColor   = bar.isLow
+      ? (isColliding ? '#ef4444' : '#06b6d4')
+      : '#22c55e';
+    const glowColor   = bar.isLow
+      ? (isColliding ? 'rgba(239,68,68,0.6)' : 'rgba(6,182,212,0.5)')
+      : 'rgba(34,197,94,0.4)';
+
+    const alpha = bar.isLow ? (0.7 + bar.hitFlash * 0.3) : 0.45;
+
+    // Bar body
+    const grad = gameCtx.createLinearGradient(bar.x, bar.y, bar.x, bar.y + bar.height);
+    grad.addColorStop(0, hexToRgba(baseColor, alpha));
+    grad.addColorStop(0.5, hexToRgba(baseColor, alpha * 1.4));
+    grad.addColorStop(1, hexToRgba(baseColor, alpha));
+
+    gameCtx.beginPath();
+    gameCtx.rect(bar.x, bar.y, bar.width, bar.height);
+    gameCtx.fillStyle   = grad;
+    gameCtx.shadowColor = glowColor;
+    gameCtx.shadowBlur  = bar.isLow ? 20 : 10;
+    gameCtx.fill();
+
+    // Top/bottom edge lines
+    gameCtx.beginPath();
+    gameCtx.moveTo(bar.x, bar.y);
+    gameCtx.lineTo(bar.x + bar.width, bar.y);
+    gameCtx.strokeStyle = hexToRgba(baseColor, 0.9);
+    gameCtx.lineWidth   = 2;
+    gameCtx.shadowBlur  = 8;
+    gameCtx.stroke();
+
+    gameCtx.beginPath();
+    gameCtx.moveTo(bar.x, bar.y + bar.height);
+    gameCtx.lineTo(bar.x + bar.width, bar.y + bar.height);
+    gameCtx.stroke();
+
+    // "DUCK!" label on dangerous low bars
+    if (bar.isLow && !bar.passed && !bar.hit && bar.width > 80) {
+      gameCtx.font         = 'bold 11px sans-serif';
+      gameCtx.fillStyle    = hexToRgba(baseColor, 0.9);
+      gameCtx.textAlign    = 'center';
+      gameCtx.textBaseline = 'middle';
+      gameCtx.shadowBlur   = 0;
+      gameCtx.fillText('DUCK!', bar.x + bar.width / 2, bar.y + bar.height / 2);
+    }
+
+    // Hazard stripe pattern
+    if (bar.isLow) {
+      gameCtx.beginPath();
+      const stripeW = 18;
+      for (let sx = bar.x; sx < bar.x + bar.width; sx += stripeW * 2) {
+        gameCtx.rect(sx, bar.y, stripeW, bar.height);
+      }
+      gameCtx.fillStyle = `rgba(0,0,0,0.12)`;
+      gameCtx.shadowBlur = 0;
+      gameCtx.fill();
+    }
+
+    gameCtx.restore();
+  });
+}
+
+// ──────────────────────────────────────────────
+// MAIN GAME LOOP
+// ──────────────────────────────────────────────
+function gameLoop() {
+  if (!State.running && screens.game.classList.contains('active') === false) return;
+  if (!screens.game.classList.contains('active')) return;
+
+  const W = gameCvs.width;
+  const H = gameCvs.height;
+
+  // Clear game canvas
+  gameCtx.clearRect(0, 0, W, H);
+
+  // Draw skeleton overlay
+  drawSkeleton();
+
+  // Update + draw mode-specific game objects
+  if (State.running) {
+    if (State.mode === 'boxer') {
+      updateBoxerMode();
+      drawBoxerMode();
+    } else {
+      updateDodgeMode();
+      drawDodgeMode();
+    }
+    updateParticles();
+    drawParticles();
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ──────────────────────────────────────────────
+// END GAME
+// ──────────────────────────────────────────────
+function endGame() {
+  State.running = false;
+  clearInterval(boxerSpawnInterval);
+  clearInterval(dodgeSpawnInterval);
+  boxerTargets.length = 0;
+  dodgeBars.length    = 0;
+
+  // Stop camera
+  if (cameraEngine) { try { cameraEngine.stop(); } catch(e) {} cameraEngine = null; }
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+  }
+  poseReady = false;
+
+  // Compute rank
+  let rank;
+  if      (State.score >= 1500) rank = 'Legendary! 🏆';
+  else if (State.score >= 1000) rank = 'Excellent form! 🔥';
+  else if (State.score >= 600)  rank = 'Great effort! 💪';
+  else if (State.score >= 300)  rank = 'Keep training! ⚡';
+  else                          rank = 'Just warming up! 🌱';
+
+  const total = State.hits + State.misses;
+  const acc   = total > 0 ? Math.round((State.hits / total) * 100) + '%' : '—';
+
+  document.getElementById('final-score').textContent     = State.score;
+  document.getElementById('final-rank').textContent      = rank;
+  document.getElementById('stat-hits').textContent       = State.hits;
+  document.getElementById('stat-misses').textContent     = State.misses;
+  document.getElementById('stat-accuracy').textContent   = acc;
+  document.getElementById('gameover-mode-tag').textContent =
+    State.mode === 'boxer' ? '🥊 Rhythm Boxer' : '🏋️ Bodyweight Dodge';
+
+  showScreen('gameover');
+}
+
+function quitGame() {
+  clearInterval(gameTimerInterval);
+  endGame();
+}
+
+function replayGame() {
+  showScreen('calibration');
+}
+
+// ──────────────────────────────────────────────
+// HELPERS
+// ──────────────────────────────────────────────
+function showLoading(visible) {
+  const el = document.getElementById('loading-overlay');
+  if (visible) { el.classList.add('visible'); el.classList.remove('hidden'); }
+  else         { el.classList.remove('visible'); el.classList.add('hidden'); }
+}
+function setLoadingText(txt) {
+  document.getElementById('loading-text').textContent = txt;
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ──────────────────────────────────────────────
+// BOOT
+// ──────────────────────────────────────────────
+document.getElementById('cam-error').classList.remove('visible');
+resizeCanvases();
+// Ensure loading overlay is hidden on page load (it lives in the game screen)
+document.getElementById('loading-overlay').classList.remove('visible');
+document.getElementById('loading-overlay').classList.remove('hidden');
+</script>
+</body>
+</html>
