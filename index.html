@@ -4,745 +4,758 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>KINETICA — AI Fitness Arena</title>
-
-<!-- MediaPipe CDN -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
-
 <style>
-  /* ─── DESIGN TOKENS ─── */
-  :root {
-    --bg:          #0b0b0f;
-    --surface:     #111118;
-    --surface2:    #1a1a26;
-    --border:      #2a2a3d;
-    --accent:      #7c3aed;
-    --accent-glow: #9d5cf6;
-    --accent2:     #06b6d4;
-    --accent2-glow:#22d3ee;
-    --danger:      #ef4444;
-    --success:     #22c55e;
-    --text:        #f1f0f5;
-    --text-muted:  #8888a8;
-    --text-dim:    #44445a;
-    --font:        'Inter', system-ui, -apple-system, sans-serif;
-    --mono:        'JetBrains Mono', 'Fira Code', monospace;
-    --r:           12px;
-    --r-sm:        6px;
-    --transition:  0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+/* ─── DESIGN TOKENS ─── */
+:root {
+  --bg:           #07070d;
+  --surface:      #0f0f1c;
+  --surface2:     #181828;
+  --surface3:     #1f1f32;
+  --border:       #252540;
+  --border-hi:    #383860;
+  --accent:       #7c3aed;
+  --accent-hi:    #a855f7;
+  --accent-glow:  #c084fc;
+  --cyan:         #06b6d4;
+  --cyan-hi:      #22d3ee;
+  --green:        #22c55e;
+  --green-hi:     #4ade80;
+  --danger:       #ef4444;
+  --danger-hi:    #f87171;
+  --orange:       #f97316;
+  --text:         #f0eff8;
+  --text-muted:   #7878a0;
+  --text-dim:     #3a3a58;
+  --font:         'Space Grotesk', system-ui, sans-serif;
+  --mono:         'JetBrains Mono', monospace;
+  --r:            14px;
+  --r-sm:         8px;
+  --r-lg:         20px;
+  --ease:         cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  width:100%;height:100%;background:var(--bg);
+  color:var(--text);font-family:var(--font);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;user-select:none;
+}
 
-  /* ─── RESET & BASE ─── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    -webkit-font-smoothing: antialiased;
-    overflow: hidden;
-    user-select: none;
-  }
+/* ─── SCREENS ─── */
+.screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.3s var(--ease);
+  padding:20px;
+}
+.screen.active{opacity:1;pointer-events:all;}
 
-  /* ─── SCREEN SYSTEM ─── */
-  .screen {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.35s ease;
-    padding: 24px;
-  }
-  .screen.active {
-    opacity: 1; pointer-events: all;
-  }
+/* ─── AMBIENT BG ORBS ─── */
+.orb{
+  position:absolute;border-radius:50%;
+  filter:blur(80px);pointer-events:none;z-index:0;
+}
+.orb-purple{
+  width:500px;height:500px;
+  background:rgba(124,58,237,0.08);
+  top:-100px;left:-100px;
+}
+.orb-cyan{
+  width:400px;height:400px;
+  background:rgba(6,182,212,0.06);
+  bottom:-80px;right:-80px;
+}
 
-  /* ─── SHARED TYPOGRAPHY ─── */
-  .wordmark {
-    font-size: clamp(11px, 1.8vw, 14px);
-    font-weight: 600;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: var(--accent-glow);
-    margin-bottom: 8px;
-  }
-  h1 {
-    font-size: clamp(38px, 7vw, 72px);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    background: linear-gradient(135deg, #fff 0%, #c4b5fd 60%, var(--accent-glow) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  h2 {
-    font-size: clamp(20px, 3.5vw, 30px);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    background: linear-gradient(120deg, #fff 0%, var(--accent-glow) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  p {
-    color: var(--text-muted);
-    font-size: clamp(13px, 1.8vw, 15px);
-    line-height: 1.65;
-  }
+/* ─── TYPOGRAPHY ─── */
+.wordmark{
+  font-size:11px;font-weight:700;
+  letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--accent-glow);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.wordmark::before,.wordmark::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(192,132,252,0.3));
+}
+.wordmark::after{
+  background:linear-gradient(270deg,transparent,rgba(192,132,252,0.3));
+}
+h1{
+  font-size:clamp(44px,8vw,80px);
+  font-weight:700;letter-spacing:-0.04em;line-height:0.95;
+  background:linear-gradient(140deg,#fff 0%,var(--accent-glow) 55%,var(--cyan-hi) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+h2{
+  font-size:clamp(22px,4vw,32px);
+  font-weight:700;letter-spacing:-0.025em;
+  background:linear-gradient(120deg,#fff 0%,var(--accent-glow) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+p{color:var(--text-muted);font-size:clamp(13px,1.7vw,15px);line-height:1.65;}
 
-  /* ─── BUTTONS ─── */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-    font-family: var(--font);
-    font-size: clamp(14px, 1.8vw, 16px);
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    border: none; border-radius: var(--r);
-    cursor: pointer;
-    transition: all var(--transition);
-    position: relative; overflow: hidden;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .btn::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: rgba(255,255,255,0.07);
-    opacity: 0;
-    transition: opacity var(--transition);
-  }
-  .btn:hover::after { opacity: 1; }
-  .btn:active { transform: scale(0.97); }
+/* ─── BUTTONS ─── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--font);font-size:15px;font-weight:600;
+  letter-spacing:0.01em;border:none;border-radius:var(--r);
+  cursor:pointer;transition:all 0.2s var(--ease);
+  position:relative;overflow:hidden;white-space:nowrap;
+  text-decoration:none;
+}
+.btn:active{transform:scale(0.96)!important;}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent) 0%,#5b21b6 100%);
+  color:#fff;padding:16px 40px;
+  box-shadow:0 0 0 1px rgba(124,58,237,0.35),0 8px 32px rgba(124,58,237,0.28);
+}
+.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 0 1px rgba(124,58,237,0.6),0 16px 48px rgba(124,58,237,0.4);
+}
+.btn-secondary{
+  background:linear-gradient(135deg,#0891b2 0%,#0e7490 100%);
+  color:#fff;padding:16px 40px;
+  box-shadow:0 0 0 1px rgba(6,182,212,0.3),0 8px 32px rgba(6,182,212,0.2);
+}
+.btn-secondary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 0 1px rgba(6,182,212,0.6),0 16px 48px rgba(6,182,212,0.35);
+}
+.btn-ghost{
+  background:transparent;color:var(--text-muted);
+  padding:12px 28px;border:1px solid var(--border);
+}
+.btn-ghost:hover{border-color:var(--accent);color:var(--text);}
+.btn-danger{
+  background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 100%);
+  color:#fca5a5;padding:10px 22px;
+  border:1px solid rgba(239,68,68,0.25);
+  font-size:13px;
+}
 
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent) 0%, #5b21b6 100%);
-    color: #fff;
-    padding: clamp(14px, 2.5vw, 18px) clamp(28px, 4vw, 44px);
-    box-shadow: 0 0 0 1px rgba(124,58,237,0.3), 0 8px 32px rgba(124,58,237,0.25);
-  }
-  .btn-primary:hover {
-    box-shadow: 0 0 0 1px rgba(124,58,237,0.6), 0 12px 40px rgba(124,58,237,0.4);
-    transform: translateY(-2px);
-  }
+/* ─── MENU SCREEN ─── */
+#screen-menu{background:var(--bg);}
+.menu-inner{
+  max-width:520px;width:100%;
+  display:flex;flex-direction:column;
+  align-items:center;gap:0;text-align:center;
+  position:relative;z-index:1;
+}
+.menu-tagline{
+  font-size:clamp(13px,1.8vw,15px);color:var(--text-muted);
+  margin:18px 0 52px;max-width:360px;
+}
+.menu-buttons{
+  display:flex;flex-direction:column;
+  gap:12px;width:100%;max-width:420px;
+}
+.menu-mode-btn{
+  width:100%;padding:18px 22px;
+  display:flex;align-items:center;gap:16px;
+  text-align:left;border-radius:var(--r-lg);
+}
+.mode-icon-wrap{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;flex-shrink:0;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+}
+.mode-text-wrap{flex:1;}
+.mode-name{display:block;font-size:16px;font-weight:700;color:#fff;}
+.mode-desc{display:block;font-size:12px;font-weight:400;color:var(--text-muted);margin-top:3px;}
+.mode-arrow{opacity:0.35;transition:opacity 0.2s;}
+.menu-mode-btn:hover .mode-arrow{opacity:0.75;}
+.menu-divider{
+  display:flex;align-items:center;gap:12px;
+  font-size:10px;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text-dim);
+  margin:6px 0;width:100%;max-width:420px;
+}
+.menu-divider::before,.menu-divider::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
 
-  .btn-secondary {
-    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-    color: #fff;
-    padding: clamp(14px, 2.5vw, 18px) clamp(28px, 4vw, 44px);
-    box-shadow: 0 0 0 1px rgba(6,182,212,0.3), 0 8px 32px rgba(6,182,212,0.2);
-  }
-  .btn-secondary:hover {
-    box-shadow: 0 0 0 1px rgba(6,182,212,0.6), 0 12px 40px rgba(6,182,212,0.35);
-    transform: translateY(-2px);
-  }
+/* ─── CALIBRATION SCREEN ─── */
+#screen-calibration{background:var(--bg);}
+.calib-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:24px;padding:clamp(28px,4vw,48px);
+  max-width:520px;width:100%;
+  display:flex;flex-direction:column;gap:22px;
+  box-shadow:0 0 80px rgba(0,0,0,0.5);
+  position:relative;z-index:1;
+}
+.calib-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;font-weight:700;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--accent-glow);
+  background:rgba(124,58,237,0.12);
+  border:1px solid rgba(124,58,237,0.25);
+  border-radius:20px;padding:5px 12px;width:fit-content;
+}
+.calib-badge::before{content:'◆';font-size:7px;}
+.device-box{
+  background:var(--surface2);
+  border-left:3px solid var(--accent);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;
+  padding:14px 16px;
+}
+.device-box .device-tag{
+  font-size:10px;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--accent-glow);margin-bottom:5px;
+}
+.device-box p{font-size:13px;color:var(--text);}
+.tip-list{display:flex;flex-direction:column;gap:10px;}
+.tip-row{display:flex;align-items:flex-start;gap:12px;}
+.tip-ico{
+  width:30px;height:30px;border-radius:8px;
+  background:rgba(6,182,212,0.08);
+  border:1px solid rgba(6,182,212,0.18);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;margin-top:1px;
+}
+.tip-row p{font-size:13px;}
+.calib-actions{display:flex;flex-direction:column;gap:10px;}
+.calib-actions .btn-primary{font-size:15px;padding:16px 32px;}
+#back-to-menu-btn{font-size:12px;padding:8px 16px;align-self:flex-start;}
 
-  .btn-ghost {
-    background: transparent;
-    color: var(--text-muted);
-    padding: clamp(10px, 1.8vw, 14px) clamp(20px, 3vw, 32px);
-    border: 1px solid var(--border);
-  }
-  .btn-ghost:hover {
-    border-color: var(--accent);
-    color: var(--text);
-  }
+/* ─── PERMISSION SCREEN ─── */
+#screen-permission{background:var(--bg);}
+.perm-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:24px;padding:clamp(32px,5vw,52px);
+  max-width:460px;width:100%;
+  display:flex;flex-direction:column;
+  align-items:center;gap:22px;text-align:center;
+  box-shadow:0 0 80px rgba(0,0,0,0.5);
+  position:relative;z-index:1;
+}
+.perm-ico-wrap{
+  width:76px;height:76px;border-radius:22px;
+  background:linear-gradient(135deg,rgba(124,58,237,0.18),rgba(6,182,212,0.12));
+  border:1px solid rgba(124,58,237,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:36px;
+}
+.perm-steps{display:flex;flex-direction:column;gap:10px;width:100%;text-align:left;}
+.perm-step{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 14px;background:var(--surface2);
+  border-radius:var(--r-sm);border:1px solid var(--border);
+}
+.perm-num{
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(124,58,237,0.2);
+  border:1px solid rgba(124,58,237,0.35);
+  color:var(--accent-glow);font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+}
+.perm-step p{font-size:12px;line-height:1.5;}
+.perm-note{
+  font-size:11px;color:var(--text-dim);
+  display:flex;align-items:center;gap:6px;
+}
+.perm-note::before{content:'🔒';font-size:12px;}
 
-  .btn-danger {
-    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
-    color: #fca5a5;
-    padding: clamp(10px, 1.8vw, 14px) clamp(20px, 3vw, 32px);
-    border: 1px solid rgba(239,68,68,0.3);
-  }
+/* ─── GAME SCREEN ─── */
+#screen-game{padding:0;background:#000;}
+#video-feed{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;transform:scaleX(-1);z-index:1;
+}
+#pose-canvas,#game-canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+}
+#pose-canvas{z-index:2;}
+#game-canvas{z-index:3;}
 
-  /* ─── MENU SCREEN ─── */
-  #screen-menu {
-    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.08) 0%, transparent 70%), var(--bg);
-  }
-  .menu-inner {
-    max-width: 540px; width: 100%;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 0;
-    text-align: center;
-  }
-  .menu-tagline {
-    font-size: clamp(12px, 1.8vw, 14px);
-    color: var(--text-muted);
-    margin: 16px 0 48px;
-    max-width: 340px;
-  }
-  .menu-buttons {
-    display: flex; flex-direction: column;
-    gap: 14px; width: 100%; max-width: 400px;
-  }
-  .menu-buttons .btn {
-    width: 100%;
-    font-size: clamp(15px, 2vw, 17px);
-    padding: clamp(16px, 2.5vw, 20px) 32px;
-  }
+/* Vignette frame */
+#screen-game::after{
+  content:'';position:absolute;inset:0;z-index:4;pointer-events:none;
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%,transparent 60%,rgba(7,7,13,0.7) 100%);
+}
 
-  /* mode badge on buttons */
-  .mode-label {
-    display: flex; align-items: center; gap: 10px; flex: 1;
-  }
-  .mode-icon {
-    font-size: 20px; line-height: 1;
-  }
-  .mode-text { text-align: left; }
-  .mode-name { display: block; font-weight: 700; }
-  .mode-desc { display: block; font-size: 11px; font-weight: 400; opacity: 0.65; margin-top: 2px; }
+/* ─── HUD ─── */
+#game-hud{
+  position:absolute;inset:0;z-index:10;
+  pointer-events:none;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  padding:clamp(12px,2vw,20px);
+}
+.hud-top{
+  display:flex;justify-content:space-between;
+  align-items:flex-start;gap:10px;
+}
+.hud-pill{
+  background:rgba(7,7,13,0.8);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:50px;
+  padding:9px 20px;
+  display:flex;align-items:center;gap:12px;
+  min-width:100px;
+}
+.hud-label{
+  font-size:9px;font-weight:700;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--text-dim);
+  margin-bottom:2px;
+}
+.hud-value{
+  font-family:var(--mono);
+  font-size:clamp(20px,3.5vw,28px);
+  font-weight:700;color:var(--text);line-height:1;
+  min-width:48px;
+}
+#hud-score .hud-value{color:var(--accent-glow);}
+#hud-timer .hud-value{color:var(--cyan-hi);}
+#hud-timer.danger .hud-value{color:var(--danger);animation:timePulse 0.5s ease infinite alternate;}
 
-  /* decorative grid lines */
-  .grid-deco {
-    position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
-  }
-  .grid-deco::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
-  }
-  #screen-menu > * { position: relative; z-index: 1; }
+/* Combo & multiplier */
+.hud-combo-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  background:rgba(7,7,13,0.8);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:50px;padding:9px 20px;
+  transition:all 0.2s;
+}
+.hud-combo-wrap.combo-active{
+  border-color:rgba(192,132,252,0.5);
+  box-shadow:0 0 20px rgba(124,58,237,0.3);
+}
+.hud-combo-label{font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px;}
+.hud-combo-value{
+  font-family:var(--mono);font-size:clamp(20px,3.5vw,28px);
+  font-weight:700;line-height:1;color:var(--accent-glow);
+}
 
-  /* ─── CALIBRATION SCREEN ─── */
-  #screen-calibration {
-    background: var(--bg);
-  }
-  .calibration-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: clamp(28px, 4vw, 48px);
-    max-width: 520px; width: 100%;
-    display: flex; flex-direction: column;
-    gap: 24px;
-    box-shadow: 0 0 0 1px rgba(124,58,237,0.08), 0 24px 64px rgba(0,0,0,0.5);
-  }
-  .calibration-header {
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .calibration-step-badge {
-    display: inline-block;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent-glow);
-    background: rgba(124,58,237,0.12);
-    border: 1px solid rgba(124,58,237,0.25);
-    border-radius: 20px;
-    padding: 4px 12px;
-    width: fit-content;
-  }
-  .device-instruction {
-    background: var(--surface2);
-    border-left: 3px solid var(--accent);
-    border-radius: 0 var(--r-sm) var(--r-sm) 0;
-    padding: 16px 18px;
-  }
-  .device-instruction .device-label {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--accent-glow);
-    margin-bottom: 6px;
-  }
-  .device-instruction p {
-    font-size: clamp(13px, 1.8vw, 14px);
-    color: var(--text);
-  }
-  .calibration-tips {
-    display: flex; flex-direction: column; gap: 10px;
-  }
-  .tip-row {
-    display: flex; align-items: flex-start; gap: 12px;
-  }
-  .tip-icon {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: rgba(6,182,212,0.1);
-    border: 1px solid rgba(6,182,212,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; flex-shrink: 0; margin-top: 1px;
-  }
-  .tip-row p { font-size: clamp(12px, 1.6vw, 13px); }
-  .calibration-actions {
-    display: flex; flex-direction: column; gap: 10px;
-  }
-  #back-to-menu-btn {
-    align-self: flex-start;
-    font-size: 12px;
-    padding: 8px 16px;
-  }
+/* Mode badge */
+#hud-mode-badge{
+  position:absolute;top:clamp(12px,2vw,20px);left:50%;
+  transform:translateX(-50%);
+  background:rgba(7,7,13,0.8);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:50px;padding:7px 18px;
+  font-size:11px;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--text-muted);
+  white-space:nowrap;
+}
 
-  /* ─── GAME SCREEN ─── */
-  #screen-game {
-    padding: 0;
-    background: #000;
-  }
-  #video-feed {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1); /* mirror */
-    z-index: 1;
-  }
-  #pose-canvas,
-  #game-canvas {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    z-index: 2;
-    /* NOTE: transform scaleX(-1) is applied to video; we compensate in JS */
-  }
-  #pose-canvas { z-index: 2; }
-  #game-canvas  { z-index: 3; }
+/* Difficulty badge */
+#hud-difficulty{
+  position:absolute;top:clamp(52px,7vw,70px);left:50%;
+  transform:translateX(-50%);
+  border-radius:50px;padding:4px 14px;
+  font-size:10px;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;opacity:0.75;
+  white-space:nowrap;
+}
+#hud-difficulty.diff-easy{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.25);}
+#hud-difficulty.diff-medium{background:rgba(249,115,22,0.15);color:var(--orange);border:1px solid rgba(249,115,22,0.25);}
+#hud-difficulty.diff-hard{background:rgba(239,68,68,0.15);color:var(--danger);border:1px solid rgba(239,68,68,0.25);}
 
-  /* HUD */
-  #game-hud {
-    position: absolute; inset: 0;
-    z-index: 10;
-    pointer-events: none;
-    display: flex; flex-direction: column;
-    justify-content: space-between;
-    padding: clamp(12px, 2vw, 20px);
-  }
-  .hud-top {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    gap: 12px;
-  }
-  .hud-pill {
-    background: rgba(11,11,15,0.82);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    padding: 8px 18px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .hud-label {
-    font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text-dim);
-  }
-  .hud-value {
-    font-family: var(--mono);
-    font-size: clamp(18px, 3.5vw, 26px);
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1;
-    min-width: 60px;
-  }
-  #hud-score .hud-value { color: var(--accent-glow); }
-  #hud-timer .hud-value { color: var(--accent2-glow); }
-  #hud-timer.danger .hud-value { color: var(--danger); animation: pulse 0.5s ease infinite alternate; }
+.hud-bottom{
+  display:flex;justify-content:space-between;
+  align-items:flex-end;pointer-events:all;
+}
+#quit-btn{font-size:13px;padding:10px 20px;}
 
-  #hud-mode-badge {
-    position: absolute; top: clamp(12px,2vw,20px); left: 50%; transform: translateX(-50%);
-    background: rgba(11,11,15,0.82);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    padding: 6px 16px;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text-muted);
-  }
+/* ─── STREAK PILLS (bottom bar) ─── */
+#streak-bar{
+  display:flex;gap:6px;align-items:center;
+  padding:8px 14px;
+  background:rgba(7,7,13,0.8);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:50px;
+}
+.streak-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--border);
+  transition:all 0.2s var(--ease);
+}
+.streak-dot.filled{background:var(--accent-glow);box-shadow:0 0 8px rgba(192,132,252,0.7);}
+.streak-dot.filled.recent{animation:dotPop 0.3s var(--ease) both;}
 
-  .hud-bottom {
-    display: flex; justify-content: flex-end; pointer-events: all;
-  }
-  #quit-btn {
-    font-size: 12px; padding: 8px 16px;
-  }
+/* ─── COUNTDOWN OVERLAY ─── */
+#countdown-overlay{
+  position:absolute;inset:0;z-index:15;
+  display:none;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+#countdown-overlay.visible{display:flex;}
+#countdown-num{
+  font-family:var(--mono);
+  font-size:clamp(80px,20vw,160px);
+  font-weight:900;line-height:1;
+  background:linear-gradient(135deg,#fff 0%,var(--accent-glow) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 48px rgba(157,92,246,0.7));
+  animation:countAnim 0.8s var(--ease) both;
+}
+@keyframes countAnim{
+  from{opacity:0;transform:scale(1.5);}
+  to{opacity:1;transform:scale(1);}
+}
 
-  /* combo flash */
-  #combo-flash {
-    position: absolute; inset: 0; z-index: 9;
-    pointer-events: none;
-    display: flex; align-items: center; justify-content: center;
-    font-size: clamp(42px, 10vw, 80px);
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    color: transparent;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  #combo-flash.flash-hit {
-    background: linear-gradient(135deg, #fff 0%, var(--accent-glow) 100%);
-    -webkit-background-clip: text; background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-    opacity: 1;
-    text-shadow: 0 0 60px rgba(157,92,246,0.8);
-  }
-  #combo-flash.flash-hit-cyan {
-    background: linear-gradient(135deg, #fff 0%, var(--accent2-glow) 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
-    opacity: 1;
-  }
-  #combo-flash.flash-collision {
-    background: linear-gradient(135deg, #fca5a5 0%, var(--danger) 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
-    opacity: 1;
-  }
+/* ─── FEEDBACK FLASH ─── */
+#feedback-flash{
+  position:absolute;inset:0;z-index:9;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);
+  font-size:clamp(36px,8vw,64px);
+  font-weight:900;letter-spacing:-0.03em;
+  opacity:0;transition:opacity 0.25s;
+}
+#feedback-flash.show-hit{
+  background:linear-gradient(135deg,#fff,var(--accent-glow));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  opacity:1;
+  filter:drop-shadow(0 0 40px rgba(157,92,246,0.9));
+}
+#feedback-flash.show-hit-cyan{
+  background:linear-gradient(135deg,#fff,var(--cyan-hi));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;opacity:1;
+}
+#feedback-flash.show-miss{
+  background:linear-gradient(135deg,#fca5a5,var(--danger));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;opacity:1;
+}
+#feedback-flash.show-combo{
+  background:linear-gradient(135deg,#fff,var(--orange),var(--accent-glow));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;opacity:1;
+  filter:drop-shadow(0 0 60px rgba(249,115,22,0.8));
+}
 
-  /* ─── PERMISSION PROMPT SCREEN ─── */
-  #screen-permission {
-    background: radial-gradient(ellipse 70% 50% at 50% 30%, rgba(124,58,237,0.07) 0%, transparent 70%), var(--bg);
-    z-index: 20;
-  }
-  .permission-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: clamp(32px, 5vw, 52px);
-    max-width: 460px; width: 100%;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 24px; text-align: center;
-    box-shadow: 0 0 0 1px rgba(124,58,237,0.08), 0 24px 64px rgba(0,0,0,0.5);
-  }
-  .permission-icon-wrap {
-    width: 72px; height: 72px; border-radius: 20px;
-    background: linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(6,182,212,0.12) 100%);
-    border: 1px solid rgba(124,58,237,0.25);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 36px;
-  }
-  .permission-steps {
-    display: flex; flex-direction: column; gap: 10px;
-    width: 100%; text-align: left;
-  }
-  .perm-step {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 12px 14px;
-    background: var(--surface2);
-    border-radius: var(--r-sm);
-    border: 1px solid var(--border);
-  }
-  .perm-step-num {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(124,58,237,0.2);
-    border: 1px solid rgba(124,58,237,0.35);
-    color: var(--accent-glow);
-    font-size: 11px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 1px;
-  }
-  .perm-step p { font-size: 12px; line-height: 1.5; }
-  .permission-note {
-    font-size: 11px; color: var(--text-dim);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .permission-note::before { content: '🔒'; font-size: 12px; }
+/* ─── SCREEN SHAKE ─── */
+@keyframes shake{
+  0%{transform:translate(0,0);}
+  15%{transform:translate(-6px,3px);}
+  30%{transform:translate(5px,-4px);}
+  45%{transform:translate(-4px,5px);}
+  60%{transform:translate(6px,-2px);}
+  75%{transform:translate(-3px,4px);}
+  90%{transform:translate(4px,-3px);}
+  100%{transform:translate(0,0);}
+}
+.screen-shake{animation:shake 0.35s var(--ease);}
 
-  /* ─── CAMERA ERROR OVERLAY ─── */
-  #cam-error {
-    position: absolute; inset: 0; z-index: 100;
-    background: rgba(11,11,15,0.97);
-    backdrop-filter: blur(8px);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    gap: 0; text-align: center; padding: 32px;
-  }
-  #cam-error.visible { display: flex; }
-  .cam-error-card {
-    background: var(--surface);
-    border: 1px solid rgba(239,68,68,0.2);
-    border-radius: 20px;
-    padding: clamp(28px, 4vw, 44px);
-    max-width: 440px; width: 100%;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 20px;
-  }
-  .cam-error-icon {
-    width: 64px; height: 64px; border-radius: 16px;
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.25);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 30px;
-  }
-  #cam-error-title { font-size: clamp(17px,2.5vw,21px); font-weight: 700; color: var(--danger); }
-  #cam-error-body  { font-size: 13px; color: var(--text-muted); max-width: 340px; line-height: 1.6; }
-  .cam-error-fix {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 14px 16px;
-    text-align: left;
-  }
-  .cam-error-fix-label {
-    font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--accent-glow);
-    margin-bottom: 8px;
-  }
-  .cam-error-fix ol {
-    padding-left: 16px; display: flex; flex-direction: column; gap: 5px;
-  }
-  .cam-error-fix ol li { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-  .cam-error-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-  #cam-error-try-again { display: none; }
-  #cam-error-try-again.show { display: flex; }
+/* ─── CAMERA ERROR ─── */
+#cam-error{
+  position:absolute;inset:0;z-index:100;
+  background:rgba(7,7,13,0.97);backdrop-filter:blur(8px);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:0;text-align:center;padding:32px;
+}
+#cam-error.visible{display:flex;}
+.cam-err-card{
+  background:var(--surface);
+  border:1px solid rgba(239,68,68,0.2);
+  border-radius:24px;padding:clamp(28px,4vw,44px);
+  max-width:440px;width:100%;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+}
+.cam-err-ico{
+  width:68px;height:68px;border-radius:18px;
+  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+}
+#cam-error-title{font-size:clamp(17px,2.5vw,21px);font-weight:700;color:var(--danger);}
+#cam-error-body{font-size:13px;color:var(--text-muted);max-width:340px;line-height:1.6;}
+.cam-err-fix{
+  width:100%;background:var(--surface2);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px;text-align:left;
+}
+.cam-err-fix-lbl{
+  font-size:9px;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--accent-glow);margin-bottom:8px;
+}
+.cam-err-fix ol{padding-left:16px;display:flex;flex-direction:column;gap:5px;}
+.cam-err-fix ol li{font-size:12px;color:var(--text-muted);line-height:1.5;}
+.cam-err-actions{display:flex;flex-direction:column;gap:8px;width:100%;}
+#cam-error-try-again{display:none;}
+#cam-error-try-again.show{display:flex;}
 
-  /* ─── GAME OVER SCREEN ─── */
-  #screen-gameover {
-    background: radial-gradient(ellipse 70% 50% at 50% 100%, rgba(124,58,237,0.1) 0%, transparent 70%), var(--bg);
-  }
-  .gameover-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: clamp(32px, 5vw, 56px);
-    max-width: 440px; width: 100%;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 28px; text-align: center;
-    box-shadow: 0 0 0 1px rgba(124,58,237,0.1), 0 32px 80px rgba(0,0,0,0.6);
-  }
-  .gameover-mode-tag {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text-dim);
-  }
-  .gameover-score-wrapper {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-  }
-  .gameover-score-label {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-muted);
-  }
-  #final-score {
-    font-family: var(--mono);
-    font-size: clamp(64px, 14vw, 96px);
-    font-weight: 900;
-    line-height: 1;
-    background: linear-gradient(135deg, #fff 0%, var(--accent-glow) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 24px rgba(157,92,246,0.5));
-  }
-  #final-rank {
-    font-size: clamp(15px,2.2vw,18px); color: var(--text-muted); font-weight: 500;
-  }
-  .gameover-stats {
-    display: flex; gap: 24px;
-    padding: 16px 24px;
-    background: var(--surface2);
-    border-radius: var(--r);
-    border: 1px solid var(--border);
-    width: 100%;
-  }
-  .stat-item { flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: center; }
-  .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
-  .stat-value { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); }
-  .stat-value.good { color: var(--success); }
-  .stat-value.bad  { color: var(--danger); }
-  .gameover-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+/* ─── LOADING ─── */
+#loading-overlay{
+  position:absolute;inset:0;z-index:50;
+  background:rgba(7,7,13,0.95);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;
+  transition:opacity 0.4s;
+}
+#loading-overlay.visible{display:flex;}
+#loading-overlay.hidden{opacity:0;pointer-events:none;}
+.loader-ring{
+  width:52px;height:52px;
+  border:3px solid var(--border);
+  border-top-color:var(--accent-glow);
+  border-radius:50%;animation:spin 0.8s linear infinite;
+}
+#loading-text{font-size:13px;color:var(--text-muted);font-weight:500;}
+.loading-sub{
+  font-size:11px;color:var(--text-dim);margin-top:-12px;
+  max-width:240px;text-align:center;line-height:1.5;
+}
 
-  /* ─── LOADING OVERLAY ─── */
-  #loading-overlay {
-    position: absolute; inset: 0; z-index: 50;
-    background: rgba(11,11,15,0.93);
-    display: none; flex-direction: column;
-    align-items: center; justify-content: center; gap: 20px;
-    transition: opacity 0.4s ease;
-  }
-  #loading-overlay.visible { display: flex; }
-  #loading-overlay.hidden  { opacity: 0; pointer-events: none; }
-  .loader-ring {
-    width: 48px; height: 48px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent-glow);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  #loading-text { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+/* ─── GAME OVER ─── */
+#screen-gameover{background:var(--bg);}
+.go-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:24px;padding:clamp(32px,5vw,52px);
+  max-width:440px;width:100%;
+  display:flex;flex-direction:column;
+  align-items:center;gap:24px;text-align:center;
+  box-shadow:0 0 100px rgba(0,0,0,0.7);
+  position:relative;z-index:1;
+}
+.go-mode-tag{
+  font-size:10px;font-weight:700;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--text-dim);
+}
+.go-score-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.go-score-lbl{
+  font-size:11px;font-weight:600;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text-muted);
+}
+#final-score{
+  font-family:var(--mono);
+  font-size:clamp(64px,14vw,100px);
+  font-weight:900;line-height:1;
+  background:linear-gradient(135deg,#fff 0%,var(--accent-glow) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 30px rgba(157,92,246,0.5));
+}
+#final-rank{font-size:clamp(14px,2vw,17px);color:var(--text-muted);font-weight:500;}
+.go-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+  background:var(--surface2);border-radius:var(--r);
+  border:1px solid var(--border);overflow:hidden;width:100%;
+}
+.stat-item{
+  display:flex;flex-direction:column;gap:5px;
+  align-items:center;padding:16px 12px;
+  border-right:1px solid var(--border);
+}
+.stat-item:last-child{border-right:none;}
+.stat-lbl{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);}
+.stat-val{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);}
+.stat-val.good{color:var(--green);}
+.stat-val.bad{color:var(--danger);}
+.go-actions{display:flex;flex-direction:column;gap:10px;width:100%;}
+.go-best{
+  font-size:11px;color:var(--text-dim);
+  display:flex;align-items:center;gap:6px;
+}
+.go-best.new-best{color:var(--accent-glow);}
+.go-best.new-best::before{content:'🏆';}
 
-  /* ─── ANIMATIONS ─── */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  #screen-menu.active .menu-inner > * {
-    animation: fadeUp 0.5s ease both;
-  }
-  #screen-menu.active .menu-inner > *:nth-child(1) { animation-delay: 0.05s; }
-  #screen-menu.active .menu-inner > *:nth-child(2) { animation-delay: 0.12s; }
-  #screen-menu.active .menu-inner > *:nth-child(3) { animation-delay: 0.18s; }
-  #screen-menu.active .menu-inner > *:nth-child(4) { animation-delay: 0.24s; }
+/* ─── ANIMATIONS ─── */
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes timePulse{from{opacity:1;}to{opacity:0.4;}}
+@keyframes dotPop{
+  0%{transform:scale(0.5);opacity:0;}
+  60%{transform:scale(1.4);}
+  100%{transform:scale(1);opacity:1;}
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes targetAppear{
+  from{opacity:0;transform:scale(0.3);}
+  to{opacity:1;transform:scale(1);}
+}
 
-  /* ─── RESPONSIVE TWEAKS ─── */
-  @media (max-width: 480px) {
-    .calibration-card { border-radius: 16px; }
-    .gameover-card { border-radius: 16px; }
-    .gameover-stats { flex-direction: column; gap: 12px; }
-    .hud-pill { padding: 6px 12px; }
-  }
-  @media (orientation: portrait) and (max-width: 600px) {
-    .hud-value { font-size: 20px; }
-  }
+/* Stagger menu items */
+#screen-menu.active .menu-inner > *{
+  animation:fadeUp 0.45s var(--ease) both;
+}
+#screen-menu.active .menu-inner > *:nth-child(1){animation-delay:0.05s;}
+#screen-menu.active .menu-inner > *:nth-child(2){animation-delay:0.12s;}
+#screen-menu.active .menu-inner > *:nth-child(3){animation-delay:0.19s;}
+#screen-menu.active .menu-inner > *:nth-child(4){animation-delay:0.26s;}
+#screen-menu.active .menu-inner > *:nth-child(5){animation-delay:0.32s;}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:480px){
+  .calib-card,.go-card,.perm-card{border-radius:18px;}
+  .go-stats{grid-template-columns:1fr;border-radius:var(--r);}
+  .stat-item{border-right:none;border-bottom:1px solid var(--border);padding:12px;}
+  .stat-item:last-child{border-bottom:none;}
+  .hud-pill{padding:7px 14px;}
+  .hud-value{font-size:18px;}
+}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 1 — MAIN MENU
-═══════════════════════════════════════════════ -->
+<!-- ═══ SCREEN 1 — MENU ═══ -->
 <section id="screen-menu" class="screen active">
-  <div class="grid-deco"></div>
+  <div class="orb orb-purple"></div>
+  <div class="orb orb-cyan"></div>
   <div class="menu-inner">
-    <span class="wordmark">Kinetica</span>
+    <div class="wordmark">Kinetica</div>
     <h1>AI Fitness<br>Arena</h1>
-    <p class="menu-tagline">Real-time pose tracking turns your body into the controller. No equipment needed.</p>
+    <p class="menu-tagline">Your body is the controller. Real-time pose tracking, zero equipment.</p>
     <div class="menu-buttons">
-      <button class="btn btn-primary" id="start-boxer-btn" onclick="selectMode('boxer')">
-        <div class="mode-label">
-          <span class="mode-icon">🥊</span>
-          <div class="mode-text">
-            <span class="mode-name">Rhythm Boxer</span>
-            <span class="mode-desc">Punch targets with your wrists · Upper body</span>
-          </div>
+      <button class="btn btn-primary menu-mode-btn" onclick="selectMode('boxer')">
+        <div class="mode-icon-wrap">🥊</div>
+        <div class="mode-text-wrap">
+          <span class="mode-name">Rhythm Boxer</span>
+          <span class="mode-desc">Punch targets · build combos · upper body</span>
         </div>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:0.5"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="mode-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="btn btn-secondary" id="start-dodge-btn" onclick="selectMode('dodge')">
-        <div class="mode-label">
-          <span class="mode-icon">🏋️</span>
-          <div class="mode-text">
-            <span class="mode-name">Bodyweight Dodge</span>
-            <span class="mode-desc">Squat under bars · Full body movement</span>
-          </div>
+      <div class="menu-divider">or</div>
+      <button class="btn btn-secondary menu-mode-btn" onclick="selectMode('dodge')">
+        <div class="mode-icon-wrap">🏋️</div>
+        <div class="mode-text-wrap">
+          <span class="mode-name">Dodge Rush</span>
+          <span class="mode-desc">Squat under bars · full body · endurance</span>
         </div>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;opacity:0.5"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="mode-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 2 — CALIBRATION GUIDE
-═══════════════════════════════════════════════ -->
+<!-- ═══ SCREEN 2 — CALIBRATION ═══ -->
 <section id="screen-calibration" class="screen">
-  <div class="calibration-card">
-    <div class="calibration-header">
-      <span class="calibration-step-badge">Setup Guide</span>
-      <h2 id="calibration-title">Get Ready</h2>
+  <div class="orb orb-purple" style="top:-150px;left:-150px;opacity:0.6;"></div>
+  <div class="calib-card">
+    <div>
+      <div class="calib-badge">Setup Guide</div>
+      <h2 style="margin-top:10px;" id="calib-title">Get Ready</h2>
     </div>
-
-    <div class="device-instruction" id="device-instruction-laptop">
-      <div class="device-label">💻 Laptop / Desktop</div>
-      <p>Place your laptop on a table at chest height. Step back 6–8 feet until your entire upper body is clearly visible in the frame.</p>
+    <div class="device-box" id="device-laptop">
+      <div class="device-tag">💻 Laptop / Desktop</div>
+      <p>Place your laptop on a table at chest height. Step back 6–8 ft so your full upper body is clearly in frame.</p>
     </div>
-    <div class="device-instruction" id="device-instruction-mobile" style="display:none;">
-      <div class="device-label">📱 Mobile / Tablet</div>
-      <p>Prop your phone against a wall or stable surface at waist height. Step back 8–10 feet until your entire body is clearly visible in the frame.</p>
+    <div class="device-box" id="device-mobile" style="display:none;">
+      <div class="device-tag">📱 Mobile / Tablet</div>
+      <p>Prop your phone against a wall at waist height. Step back 8–10 ft so your full body fits in frame.</p>
     </div>
-
-    <div class="calibration-tips">
+    <div class="tip-list">
       <div class="tip-row">
-        <div class="tip-icon">💡</div>
-        <p>Make sure the room is well-lit — face a window or lamp for best tracking accuracy.</p>
+        <div class="tip-ico">💡</div>
+        <p>Face a window or lamp — good lighting dramatically improves tracking accuracy.</p>
       </div>
       <div class="tip-row">
-        <div class="tip-icon">🎯</div>
-        <p id="tip-mode-specific">Keep your full upper body centered in the frame for punch detection.</p>
+        <div class="tip-ico">🎯</div>
+        <p id="tip-mode">Keep your full upper body centered so both wrists stay visible at all times.</p>
       </div>
       <div class="tip-row">
-        <div class="tip-icon">🔒</div>
-        <p>Your camera feed is processed entirely on your device. Nothing is uploaded or stored.</p>
+        <div class="tip-ico">🔒</div>
+        <p>All AI processing happens locally on your device. Nothing is uploaded or stored.</p>
       </div>
     </div>
-
-    <div class="calibration-actions">
-      <button class="btn btn-primary" id="start-camera-btn" onclick="goToPermissionOrGame()">
-        Skip Guide &amp; Start Camera
-      </button>
-      <button class="btn btn-ghost" id="back-to-menu-btn" onclick="showScreen('menu')">
-        ← Back to Menu
-      </button>
+    <div class="calib-actions">
+      <button class="btn btn-primary" onclick="goToPermissionOrGame()">Start Camera & Play</button>
+      <button class="btn btn-ghost" id="back-to-menu-btn" onclick="showScreen('menu')">← Back</button>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 2b — CAMERA PERMISSION PROMPT
-═══════════════════════════════════════════════ -->
+<!-- ═══ SCREEN 2b — PERMISSION ═══ -->
 <section id="screen-permission" class="screen">
-  <div class="permission-card">
-    <div class="permission-icon-wrap">📷</div>
+  <div class="orb orb-purple" style="opacity:0.5;"></div>
+  <div class="perm-card">
+    <div class="perm-ico-wrap">📷</div>
     <div>
-      <h2 style="margin-bottom:8px;">Camera Access Needed</h2>
-      <p>Kinetica uses your camera to track your body movements in real time. Your video never leaves your device.</p>
+      <h2 style="margin-bottom:8px;">Allow Camera Access</h2>
+      <p>Kinetica uses your camera to track body movements in real time. Your video never leaves this device.</p>
     </div>
-    <div class="permission-steps">
-      <div class="perm-step">
-        <div class="perm-step-num">1</div>
-        <p>A browser popup will appear asking for camera permission — click <strong style="color:var(--text)">Allow</strong>.</p>
-      </div>
-      <div class="perm-step">
-        <div class="perm-step-num">2</div>
-        <p>Stand back so your full upper body (or full body for Dodge mode) is in frame.</p>
-      </div>
-      <div class="perm-step">
-        <div class="perm-step-num">3</div>
-        <p>The game starts automatically once your pose is detected. No calibration buttons needed.</p>
-      </div>
+    <div class="perm-steps">
+      <div class="perm-step"><div class="perm-num">1</div><p>A browser popup will appear — click <strong style="color:var(--text)">Allow</strong>.</p></div>
+      <div class="perm-step"><div class="perm-num">2</div><p>Step back so your full body (or upper body) is in frame.</p></div>
+      <div class="perm-step"><div class="perm-num">3</div><p>A 3-second countdown starts once your pose is detected. Get ready!</p></div>
     </div>
-    <button class="btn btn-primary" style="width:100%;font-size:16px;padding:18px 32px;" onclick="startGame()">
-      Allow Camera &amp; Start Game
-    </button>
-    <span class="permission-note">Your camera feed is processed locally. Nothing is uploaded or stored.</span>
+    <button class="btn btn-primary" style="width:100%;padding:18px 32px;font-size:16px;" onclick="startGame()">Allow & Start</button>
+    <span class="perm-note">Processed locally — never uploaded or stored.</span>
     <button class="btn btn-ghost" style="font-size:12px;padding:8px 16px;" onclick="showScreen('calibration')">← Back</button>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 3 — GAME ARENA
-═══════════════════════════════════════════════ -->
+<!-- ═══ SCREEN 3 — GAME ═══ -->
 <section id="screen-game" class="screen">
-  <!-- Video + canvas stack -->
   <video id="video-feed" playsinline muted autoplay></video>
   <canvas id="pose-canvas"></canvas>
   <canvas id="game-canvas"></canvas>
 
-  <!-- HUD -->
   <div id="game-hud">
     <div class="hud-top">
       <div class="hud-pill" id="hud-score">
-        <div>
-          <div class="hud-label">Score</div>
-          <div class="hud-value" id="score-display">0</div>
-        </div>
+        <div><div class="hud-label">Score</div><div class="hud-value" id="score-display">0</div></div>
+      </div>
+      <div class="hud-combo-wrap" id="hud-combo">
+        <div class="hud-combo-label">Combo</div>
+        <div class="hud-combo-value" id="combo-display">×1</div>
       </div>
       <div class="hud-pill" id="hud-timer">
-        <div>
-          <div class="hud-label">Time</div>
-          <div class="hud-value" id="timer-display">60</div>
-        </div>
+        <div><div class="hud-label">Time</div><div class="hud-value" id="timer-display">60</div></div>
       </div>
     </div>
+
     <div id="hud-mode-badge">Loading…</div>
+    <div id="hud-difficulty" class="diff-easy">Warm Up</div>
+
     <div class="hud-bottom">
+      <div id="streak-bar">
+        <div class="streak-dot" id="sd0"></div>
+        <div class="streak-dot" id="sd1"></div>
+        <div class="streak-dot" id="sd2"></div>
+        <div class="streak-dot" id="sd3"></div>
+        <div class="streak-dot" id="sd4"></div>
+      </div>
       <button class="btn btn-danger" id="quit-btn" onclick="quitGame()">Quit</button>
     </div>
   </div>
 
-  <!-- Combo flash text -->
-  <div id="combo-flash"></div>
+  <!-- Countdown -->
+  <div id="countdown-overlay"><div id="countdown-num">3</div></div>
 
-  <!-- Camera error overlay -->
+  <!-- Feedback flash -->
+  <div id="feedback-flash"></div>
+
+  <!-- Camera error -->
   <div id="cam-error">
-    <div class="cam-error-card">
-      <div class="cam-error-icon" id="cam-error-icon">🚫</div>
-      <div id="cam-error-title">Camera Access Denied</div>
-      <div id="cam-error-body">Kinetica needs your camera to track movements. Please grant access and try again.</div>
-      <div class="cam-error-fix">
-        <div class="cam-error-fix-label">How to fix this</div>
+    <div class="cam-err-card">
+      <div class="cam-err-ico" id="cam-error-icon">🚫</div>
+      <div id="cam-error-title">Camera Blocked</div>
+      <div id="cam-error-body">Kinetica needs your camera to track movements.</div>
+      <div class="cam-err-fix">
+        <div class="cam-err-fix-lbl">How to fix</div>
         <ol id="cam-error-steps">
-          <li>Click the camera/lock icon in your browser's address bar.</li>
-          <li>Set Camera permission to <strong>Allow</strong>.</li>
-          <li>Refresh the page and try again.</li>
+          <li>Click the camera icon in your browser address bar.</li>
+          <li>Set Camera to <strong>Allow</strong>.</li>
+          <li>Press Try Again below.</li>
         </ol>
       </div>
-      <div class="cam-error-actions">
+      <div class="cam-err-actions">
         <button class="btn btn-primary" id="cam-error-try-again" onclick="retryCamera()">Try Again</button>
-        <button class="btn btn-ghost" onclick="showScreen('menu')" style="font-size:13px;">← Back to Main Menu</button>
+        <button class="btn btn-ghost" onclick="showScreen('menu')" style="font-size:13px;">← Main Menu</button>
       </div>
     </div>
   </div>
@@ -750,69 +763,109 @@
   <!-- Loading overlay -->
   <div id="loading-overlay">
     <div class="loader-ring"></div>
-    <div id="loading-text">Initializing pose engine…</div>
+    <div id="loading-text">Initializing…</div>
+    <div class="loading-sub" id="loading-sub">Setting up the AI pose engine. This can take a few seconds on first load.</div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN 4 — GAME OVER
-═══════════════════════════════════════════════ -->
+<!-- ═══ SCREEN 4 — GAME OVER ═══ -->
 <section id="screen-gameover" class="screen">
-  <div class="gameover-card">
-    <div class="gameover-mode-tag" id="gameover-mode-tag">Rhythm Boxer</div>
+  <div class="orb orb-purple" style="bottom:-100px;right:-80px;opacity:0.7;"></div>
+  <div class="orb orb-cyan" style="top:-80px;left:-60px;opacity:0.5;"></div>
+  <div class="go-card">
+    <div class="go-mode-tag" id="go-mode-tag">Rhythm Boxer</div>
     <h2>Session Complete</h2>
-    <div class="gameover-score-wrapper">
-      <div class="gameover-score-label">Final Score</div>
+    <div class="go-score-wrap">
+      <div class="go-score-lbl">Final Score</div>
       <div id="final-score">0</div>
       <div id="final-rank">Keep pushing! 💪</div>
     </div>
-    <div class="gameover-stats">
-      <div class="stat-item">
-        <div class="stat-label">Hits</div>
-        <div class="stat-value good" id="stat-hits">0</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Misses</div>
-        <div class="stat-value bad" id="stat-misses">0</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Accuracy</div>
-        <div class="stat-value" id="stat-accuracy">—</div>
-      </div>
+    <div class="go-stats">
+      <div class="stat-item"><div class="stat-lbl">Hits</div><div class="stat-val good" id="stat-hits">0</div></div>
+      <div class="stat-item"><div class="stat-lbl">Misses</div><div class="stat-val bad" id="stat-misses">0</div></div>
+      <div class="stat-item"><div class="stat-lbl">Accuracy</div><div class="stat-val" id="stat-accuracy">—</div></div>
     </div>
-    <div class="gameover-actions">
+    <div class="go-best" id="go-best-line">Personal Best: 0</div>
+    <div class="go-actions">
       <button class="btn btn-primary" onclick="replayGame()">Play Again</button>
       <button class="btn btn-ghost" onclick="showScreen('menu')">← Main Menu</button>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     JAVASCRIPT ENGINE
-═══════════════════════════════════════════════ -->
+<!-- ═══ JAVASCRIPT ENGINE ═══ -->
 <script>
 'use strict';
 
-// ──────────────────────────────────────────────
-// STATE
-// ──────────────────────────────────────────────
-const State = {
-  mode: null,          // 'boxer' | 'dodge'
-  score: 0,
-  hits: 0,
-  misses: 0,
-  timeLeft: 60,
-  running: false,
-  poseResults: null,
-  isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent),
-
-  // Pose landmark mirror coords (normalized 0–1, already flipped for display)
-  landmarks: null,
+/* ══════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════ */
+const LM = {
+  NOSE:0,L_EYE_IN:1,L_EYE:2,L_EYE_OUT:3,
+  R_EYE_IN:4,R_EYE:5,R_EYE_OUT:6,
+  L_EAR:7,R_EAR:8,
+  L_MOUTH:9,R_MOUTH:10,
+  L_SHOULDER:11,R_SHOULDER:12,
+  L_ELBOW:13,R_ELBOW:14,
+  L_WRIST:15,R_WRIST:16,
+  L_PINKY:17,R_PINKY:18,
+  L_INDEX:19,R_INDEX:20,
+  L_THUMB:21,R_THUMB:22,
+  L_HIP:23,R_HIP:24,
+  L_KNEE:25,R_KNEE:26,
+  L_ANKLE:27,R_ANKLE:28,
 };
 
-// ──────────────────────────────────────────────
-// SCREEN MANAGEMENT
-// ──────────────────────────────────────────────
+const CONNECTIONS = [
+  [LM.L_SHOULDER,LM.R_SHOULDER],
+  [LM.L_SHOULDER,LM.L_ELBOW],[LM.L_ELBOW,LM.L_WRIST],
+  [LM.R_SHOULDER,LM.R_ELBOW],[LM.R_ELBOW,LM.R_WRIST],
+  [LM.L_SHOULDER,LM.L_HIP],[LM.R_SHOULDER,LM.R_HIP],
+  [LM.L_HIP,LM.R_HIP],
+  [LM.L_HIP,LM.L_KNEE],[LM.L_KNEE,LM.L_ANKLE],
+  [LM.R_HIP,LM.R_KNEE],[LM.R_KNEE,LM.R_ANKLE],
+];
+
+const GAME_DURATION   = 60;  // seconds
+const COMBO_TIMEOUT   = 2200; // ms — time before combo resets
+const STREAK_LENGTH   = 5;
+const MAX_TARGETS_BOXER = 4;
+const LOCAL_BEST_KEY  = 'kinetica_best';
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+const G = {
+  mode:         null,
+  score:        0,
+  hits:         0,
+  misses:       0,
+  combo:        1,
+  streak:       0,
+  timeLeft:     GAME_DURATION,
+  running:      false,
+  paused:       false,
+  poseResults:  null,
+  landmarks:    null,
+  isMobile:     /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent),
+
+  // Wrist velocity tracking (for punch detection)
+  wristPrev:    { L: null, R: null },
+  wristCurr:    { L: null, R: null },
+  wristVel:     { L: 0, R: 0 },
+
+  // Per-frame punch state (set by pose update, consumed by game logic)
+  punchDetected: { L: false, R: false },
+  punchCooldown: { L: 0, R: 0 }, // frames
+
+  comboResetTimer: null,
+  frameCount: 0,
+  difficulty: 'easy', // 'easy' | 'medium' | 'hard'
+};
+
+/* ══════════════════════════════════════════
+   DOM REFS
+══════════════════════════════════════════ */
 const screens = {
   menu:        document.getElementById('screen-menu'),
   calibration: document.getElementById('screen-calibration'),
@@ -820,443 +873,376 @@ const screens = {
   game:        document.getElementById('screen-game'),
   gameover:    document.getElementById('screen-gameover'),
 };
+const video    = document.getElementById('video-feed');
+const poseCvs  = document.getElementById('pose-canvas');
+const gameCvs  = document.getElementById('game-canvas');
+const poseCtx  = poseCvs.getContext('2d');
+const gameCtx  = gameCvs.getContext('2d');
 
 function showScreen(name) {
-  Object.keys(screens).forEach(k => screens[k].classList.remove('active'));
+  Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
 }
 
-// ──────────────────────────────────────────────
-// MODE SELECTION
-// ──────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  poseCvs.width = gameCvs.width  = window.innerWidth;
+  poseCvs.height= gameCvs.height = window.innerHeight;
+});
+poseCvs.width = gameCvs.width  = window.innerWidth;
+poseCvs.height= gameCvs.height = window.innerHeight;
+
+/* ══════════════════════════════════════════
+   MODE SELECTION
+══════════════════════════════════════════ */
 function selectMode(mode) {
-  State.mode = mode;
-
-  // Populate calibration screen
-  const laptopInstr  = document.getElementById('device-instruction-laptop');
-  const mobileInstr  = document.getElementById('device-instruction-mobile');
-  const tipMode      = document.getElementById('tip-mode-specific');
-  const calTitle     = document.getElementById('calibration-title');
-
-  if (State.isMobile) {
-    laptopInstr.style.display = 'none';
-    mobileInstr.style.display = 'block';
-  } else {
-    laptopInstr.style.display = 'block';
-    mobileInstr.style.display = 'none';
-  }
-
-  if (mode === 'boxer') {
-    calTitle.textContent = 'Rhythm Boxer Setup';
-    tipMode.textContent  = 'Keep your full upper body centered so both wrists are always visible.';
-  } else {
-    calTitle.textContent = 'Bodyweight Dodge Setup';
-    tipMode.textContent  = 'Make sure your full body fits in frame — you\'ll need to squat low to dodge bars.';
-  }
-
+  G.mode = mode;
+  document.getElementById('device-laptop').style.display = G.isMobile ? 'none' : 'block';
+  document.getElementById('device-mobile').style.display = G.isMobile ? 'block' : 'none';
+  document.getElementById('calib-title').textContent = mode === 'boxer' ? 'Rhythm Boxer Setup' : 'Dodge Rush Setup';
+  document.getElementById('tip-mode').textContent   = mode === 'boxer'
+    ? 'Keep both wrists visible at all times — extend your arms to punch targets.'
+    : 'Make sure your full body fits in frame. You\'ll squat low to dodge incoming bars.';
   showScreen('calibration');
 }
 
-// ──────────────────────────────────────────────
-// CANVAS & VIDEO ELEMENTS
-// ──────────────────────────────────────────────
-const video     = document.getElementById('video-feed');
-const poseCvs   = document.getElementById('pose-canvas');
-const gameCvs   = document.getElementById('game-canvas');
-const poseCtx   = poseCvs.getContext('2d');
-const gameCtx   = gameCvs.getContext('2d');
-
-function resizeCanvases() {
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  poseCvs.width  = gameCvs.width  = W;
-  poseCvs.height = gameCvs.height = H;
-}
-
-window.addEventListener('resize', resizeCanvases);
-resizeCanvases();
-
-// ──────────────────────────────────────────────
-// MEDIAPIPE POSE
-// ──────────────────────────────────────────────
-let poseEngine = null;
+/* ══════════════════════════════════════════
+   MEDIAPIPE POSE ENGINE
+══════════════════════════════════════════ */
+let poseEngine   = null;
 let cameraEngine = null;
-let poseReady  = false;
 
 function initPose() {
-  // Create and configure the engine. We skip .initialize() which hangs
-  // on many CDN builds. The engine self-loads on the first .send() call.
   poseEngine = new Pose({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`,
   });
-
   poseEngine.setOptions({
-    modelComplexity: 1,
-    smoothLandmarks: true,
-    enableSegmentation: false,
-    smoothSegmentation: false,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5,
+    modelComplexity:         1,
+    smoothLandmarks:         true,
+    enableSegmentation:      false,
+    smoothSegmentation:      false,
+    minDetectionConfidence:  0.55,
+    minTrackingConfidence:   0.55,
   });
+  poseEngine.onResults(onPoseResults);
+}
 
-  poseEngine.onResults((results) => {
-    State.poseResults = results;
-    if (results.poseLandmarks) {
-      State.landmarks = results.poseLandmarks.map(lm => ({
-        x: 1 - lm.x,
-        y: lm.y,
-        z: lm.z,
-        visibility: lm.visibility,
-      }));
-    } else {
-      State.landmarks = null;
+function onPoseResults(results) {
+  G.poseResults = results;
+  if (results.poseLandmarks) {
+    // Mirror X (because video is mirrored)
+    G.landmarks = results.poseLandmarks.map(lm => ({
+      x: 1 - lm.x, y: lm.y, z: lm.z,
+      visibility: lm.visibility,
+    }));
+    updateWristVelocity();
+  } else {
+    G.landmarks = null;
+  }
+}
+
+/* ──────────────────────────────────────────
+   WRIST VELOCITY & PUNCH DETECTION
+────────────────────────────────────────── */
+function updateWristVelocity() {
+  const W = gameCvs.width, H = gameCvs.height;
+  ['L','R'].forEach(side => {
+    const idx  = side === 'L' ? LM.L_WRIST : LM.R_WRIST;
+    const lm   = G.landmarks[idx];
+    if (!lm || (lm.visibility||0) < 0.4) {
+      G.wristVel[side] = 0; G.punchDetected[side] = false; return;
     }
-    poseReady = true;
+    const curr = { x: lm.x * W, y: lm.y * H };
+    const prev = G.wristPrev[side];
+    if (prev) {
+      const dx = curr.x - prev.x;
+      const dy = curr.y - prev.y;
+      G.wristVel[side] = Math.hypot(dx, dy);
+    } else {
+      G.wristVel[side] = 0;
+    }
+    G.wristPrev[side] = curr;
+    G.wristCurr[side] = curr;
+
+    // Punch = fast wrist movement. Threshold in px/frame (~16px at 60fps = real punch)
+    const PUNCH_THRESH = W * 0.012;
+    if (G.wristVel[side] > PUNCH_THRESH && G.punchCooldown[side] <= 0) {
+      G.punchDetected[side] = true;
+      G.punchCooldown[side] = 14; // ~230ms cooldown at 60fps
+    } else {
+      G.punchDetected[side] = false;
+    }
+    if (G.punchCooldown[side] > 0) G.punchCooldown[side]--;
   });
 }
 
-// ──────────────────────────────────────────────
-// PERMISSION FLOW
-// ──────────────────────────────────────────────
-
-// Called from calibration screen's "Start Camera" button.
-// Check if permission is already granted — if so skip the prompt screen.
+/* ══════════════════════════════════════════
+   PERMISSION / CAMERA FLOW
+══════════════════════════════════════════ */
 async function goToPermissionOrGame() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showScreen('game');
-    showCamError('unsupported');
-    return;
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showScreen('game'); showCamError('unsupported'); return;
   }
   try {
-    const status = await navigator.permissions.query({ name: 'camera' });
-    if (status.state === 'granted') {
-      // Already allowed — go straight to game
-      startGame();
-    } else {
-      // 'prompt' or 'denied' — show our permission explainer first
-      showScreen('permission');
-    }
-  } catch (_) {
-    // permissions.query not supported in this browser — show explainer anyway
-    showScreen('permission');
-  }
+    const s = await navigator.permissions.query({ name: 'camera' });
+    s.state === 'granted' ? startGame() : showScreen('permission');
+  } catch { showScreen('permission'); }
 }
 
-// Retry after fixing permissions — re-query state to give helpful feedback
 async function retryCamera() {
   document.getElementById('cam-error').classList.remove('visible');
   startGame();
 }
 
-// Show a differentiated error message depending on what went wrong
 function showCamError(type) {
-  showLoading(false);
-  const iconEl    = document.getElementById('cam-error-icon');
-  const titleEl   = document.getElementById('cam-error-title');
-  const bodyEl    = document.getElementById('cam-error-body');
-  const stepsEl   = document.getElementById('cam-error-steps');
-  const retryBtn  = document.getElementById('cam-error-try-again');
-
-  if (type === 'denied') {
-    iconEl.textContent  = '🚫';
-    titleEl.textContent = 'Camera Access Blocked';
-    bodyEl.textContent  = 'Your browser has blocked camera access for this page. You need to grant permission before the game can track your movements.';
-    stepsEl.innerHTML   =
-      '<li>Click the <strong style="color:var(--text)">camera icon</strong> or <strong style="color:var(--text)">lock icon</strong> in your browser\'s address bar.</li>' +
-      '<li>Find the Camera setting and switch it to <strong style="color:var(--text)">Allow</strong>.</li>' +
-      '<li>Press the <strong style="color:var(--text)">Try Again</strong> button below — no refresh needed.</li>';
-    retryBtn.classList.add('show');
-
-  } else if (type === 'notfound') {
-    iconEl.textContent  = '🔍';
-    titleEl.textContent = 'No Camera Detected';
-    bodyEl.textContent  = 'Kinetica couldn\'t find a camera on this device. Make sure one is connected and not in use by another app.';
-    stepsEl.innerHTML   =
-      '<li>Check that a webcam is physically connected and powered on.</li>' +
-      '<li>Close any other apps that might be using the camera (video calls, OBS, etc.).</li>' +
-      '<li>Try plugging the camera into a different USB port, then press <strong style="color:var(--text)">Try Again</strong>.</li>';
-    retryBtn.classList.add('show');
-
-  } else if (type === 'inuse') {
-    iconEl.textContent  = '⚠️';
-    titleEl.textContent = 'Camera Already In Use';
-    bodyEl.textContent  = 'Another application is currently using your camera. Close it and try again.';
-    stepsEl.innerHTML   =
-      '<li>Close any video-call apps (Zoom, Teams, Meet, FaceTime, etc.).</li>' +
-      '<li>Close any browser tabs that might be using the camera.</li>' +
-      '<li>Press <strong style="color:var(--text)">Try Again</strong> below.</li>';
-    retryBtn.classList.add('show');
-
-  } else if (type === 'unsupported') {
-    iconEl.textContent  = '🌐';
-    titleEl.textContent = 'Browser Not Supported';
-    bodyEl.textContent  = 'Your browser doesn\'t support camera access. Kinetica works best in Chrome, Edge, or Firefox on a modern device.';
-    stepsEl.innerHTML   =
-      '<li>Open this page in <strong style="color:var(--text)">Google Chrome</strong> or <strong style="color:var(--text)">Microsoft Edge</strong>.</li>' +
-      '<li>Make sure your browser is up to date.</li>' +
-      '<li>If on iOS, use Safari 14.5 or later.</li>';
-    retryBtn.classList.remove('show');
-
-  } else {
-    // Generic / unknown error
-    iconEl.textContent  = '❌';
-    titleEl.textContent = 'Camera Error';
-    bodyEl.textContent  = 'Something went wrong while accessing your camera. Please try the steps below.';
-    stepsEl.innerHTML   =
-      '<li>Refresh the page and allow camera access when prompted.</li>' +
-      '<li>Make sure no other app is using the camera.</li>' +
-      '<li>Check your browser\'s site settings and ensure Camera is set to <strong style="color:var(--text)">Allow</strong>.</li>';
-    retryBtn.classList.add('show');
-  }
-
+  setLoading(false);
+  const icon  = document.getElementById('cam-error-icon');
+  const title = document.getElementById('cam-error-title');
+  const body  = document.getElementById('cam-error-body');
+  const steps = document.getElementById('cam-error-steps');
+  const retry = document.getElementById('cam-error-try-again');
+  const map = {
+    denied:      ['🚫','Camera Blocked','Your browser blocked camera access for this page.',
+      '<li>Click the <b style="color:var(--text)">camera icon</b> in your address bar.</li><li>Set Camera to <b style="color:var(--text)">Allow</b>.</li><li>Press <b style="color:var(--text)">Try Again</b>.</li>',true],
+    notfound:    ['🔍','No Camera Found','No camera was detected on this device.',
+      '<li>Check that a webcam is connected and powered on.</li><li>Close other apps using the camera.</li><li>Reconnect and press <b style="color:var(--text)">Try Again</b>.</li>',true],
+    inuse:       ['⚠️','Camera In Use','Another app is using your camera.',
+      '<li>Close Zoom, Teams, Meet, or any other video app.</li><li>Close other browser tabs using the camera.</li><li>Press <b style="color:var(--text)">Try Again</b>.</li>',true],
+    unsupported: ['🌐','Browser Not Supported','Your browser doesn\'t support camera access.',
+      '<li>Open this page in <b style="color:var(--text)">Chrome</b> or <b style="color:var(--text)">Edge</b>.</li><li>Make sure your browser is up to date.</li>',false],
+  };
+  const [ico,ttl,bdy,sts,showRetry] = map[type] || ['❌','Camera Error','Something went wrong.',
+    '<li>Refresh and allow camera access.</li><li>Ensure no other app is using the camera.</li>',true];
+  icon.textContent  = ico; title.textContent = ttl; body.textContent = bdy;
+  steps.innerHTML   = sts;
+  showRetry ? retry.classList.add('show') : retry.classList.remove('show');
   document.getElementById('cam-error').classList.add('visible');
 }
 
-// ──────────────────────────────────────────────
-// WEBCAM STARTUP
-// ──────────────────────────────────────────────
 async function startCamera() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showCamError('unsupported');
-    return false;
-  }
-
+  if (!navigator.mediaDevices?.getUserMedia) { showCamError('unsupported'); return false; }
   try {
-    const constraints = {
-      video: {
-        width:  { ideal: 1280 },
-        height: { ideal: 720 },
-        facingMode: 'user',
-      },
-      audio: false,
-    };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video:{ width:{ideal:1280}, height:{ideal:720}, facingMode:'user' }, audio:false
+    });
     video.srcObject = stream;
-    await new Promise(res => { video.onloadedmetadata = res; });
+    await new Promise(r => { video.onloadedmetadata = r; });
     await video.play();
     return true;
   } catch (err) {
-    console.error('Camera error:', err.name, err.message);
-    // Map DOMException names to our error types
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      showCamError('denied');
-    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-      showCamError('notfound');
-    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-      showCamError('inuse');
-    } else if (err.name === 'NotSupportedError' || err.name === 'TypeError') {
-      showCamError('unsupported');
-    } else {
-      showCamError('generic');
-    }
+    const m = {
+      NotAllowedError:'denied', PermissionDeniedError:'denied',
+      NotFoundError:'notfound', DevicesNotFoundError:'notfound',
+      NotReadableError:'inuse', TrackStartError:'inuse',
+      NotSupportedError:'unsupported', TypeError:'unsupported',
+    };
+    showCamError(m[err.name] || 'generic');
     return false;
   }
 }
 
-// ──────────────────────────────────────────────
-// START GAME FLOW
-// ──────────────────────────────────────────────
-let gameTimerInterval = null;
+/* ══════════════════════════════════════════
+   GAME START FLOW
+══════════════════════════════════════════ */
+let _timerInterval = null;
 
 async function startGame() {
   showScreen('game');
-  setLoadingText('Requesting camera access…');
-  showLoading(true);
+  setLoadingText('Requesting camera…','');
+  setLoading(true);
 
   const camOk = await startCamera();
-  if (!camOk) {
-    showLoading(false);
-    document.getElementById('cam-error').classList.add('visible');
-    return;
-  }
+  if (!camOk) { setLoading(false); document.getElementById('cam-error').classList.add('visible'); return; }
 
-  setLoadingText('Loading AI pose engine…');
-  // initPose is now synchronous — just sets up the engine object
+  setLoadingText('Loading AI pose engine…','This may take a few seconds on first load.');
   initPose();
 
-  // Start the camera utility which pumps frames into MediaPipe
   cameraEngine = new Camera(video, {
-    onFrame: async () => {
-      if (poseEngine) {
-        try { await poseEngine.send({ image: video }); } catch(e) {}
-      }
-    },
-    width: 1280,
-    height: 720,
+    onFrame: async () => { if (poseEngine) { try { await poseEngine.send({image:video}); } catch{} } },
+    width:1280, height:720,
   });
   await cameraEngine.start();
 
-  // Wait for first pose result (engine self-loads on first send).
-  // Give it up to 12 seconds; after that proceed anyway so game isn't stuck.
-  setLoadingText('Detecting your pose…');
+  setLoadingText('Detecting your pose…','Stand back so your full body is visible.');
   await new Promise(res => {
-    const deadline = Date.now() + 12000;
-    const check = () => {
-      if (State.poseResults || Date.now() > deadline) { res(); return; }
-      setTimeout(check, 120);
-    };
+    const deadline = Date.now() + 14000;
+    const check = () => { G.poseResults || Date.now() > deadline ? res() : setTimeout(check,120); };
     check();
   });
 
-  showLoading(false);
+  setLoading(false);
   resetGameState();
-  State.running = true;
   document.getElementById('hud-mode-badge').textContent =
-    State.mode === 'boxer' ? '🥊  Rhythm Boxer' : '🏋️  Bodyweight Dodge';
+    G.mode === 'boxer' ? '🥊  Rhythm Boxer' : '🏋️  Dodge Rush';
 
-  // Start 60-second countdown
-  clearInterval(gameTimerInterval);
-  gameTimerInterval = setInterval(() => {
-    if (!State.running) return;
-    State.timeLeft -= 1;
+  // 3-2-1 countdown
+  await runCountdown();
+
+  G.running = true;
+
+  // Timer
+  clearInterval(_timerInterval);
+  _timerInterval = setInterval(() => {
+    if (!G.running || G.paused) return;
+    G.timeLeft--;
+    updateDifficulty();
     updateHUD();
-
     const timerEl = document.getElementById('hud-timer');
-    if (State.timeLeft <= 10) timerEl.classList.add('danger');
-    else timerEl.classList.remove('danger');
-
-    if (State.timeLeft <= 0) {
-      clearInterval(gameTimerInterval);
-      endGame();
-    }
+    timerEl.classList.toggle('danger', G.timeLeft <= 10);
+    if (G.timeLeft <= 0) { clearInterval(_timerInterval); endGame(); }
   }, 1000);
 
-  // Initialise game objects for the selected mode
-  if (State.mode === 'boxer') initBoxerMode();
-  else initDodgeMode();
+  if (G.mode === 'boxer') Boxer.init();
+  else Dodge.init();
 
-  // Kick off render loop
   requestAnimationFrame(gameLoop);
 }
 
 function resetGameState() {
-  State.score     = 0;
-  State.hits      = 0;
-  State.misses    = 0;
-  State.timeLeft  = 60;
-  State.running   = true;
-  updateHUD();
+  G.score    = 0; G.hits   = 0; G.misses = 0;
+  G.combo    = 1; G.streak = 0;
+  G.timeLeft = GAME_DURATION; G.running = false; G.paused = false;
+  G.frameCount = 0; G.difficulty = 'easy';
+  G.wristPrev = {L:null,R:null}; G.wristCurr = {L:null,R:null};
+  G.wristVel  = {L:0,R:0};
+  G.punchDetected = {L:false,R:false};
+  G.punchCooldown = {L:0,R:0};
+  clearTimeout(G.comboResetTimer);
+  updateHUD(); updateStreakBar();
   document.getElementById('hud-timer').classList.remove('danger');
+  document.getElementById('hud-difficulty').className = 'diff-easy';
+  document.getElementById('hud-difficulty').textContent = 'Warm Up';
 }
 
-function updateHUD() {
-  document.getElementById('score-display').textContent = State.score;
-  document.getElementById('timer-display').textContent = Math.max(0, State.timeLeft);
+function updateDifficulty() {
+  const elapsed = GAME_DURATION - G.timeLeft;
+  if (elapsed < 20)       G.difficulty = 'easy';
+  else if (elapsed < 40)  G.difficulty = 'medium';
+  else                    G.difficulty = 'hard';
+
+  const el = document.getElementById('hud-difficulty');
+  const labels = { easy:'Warm Up', medium:'Getting Hot 🔥', hard:'Max Effort ⚡' };
+  el.className = `diff-${G.difficulty}`;
+  el.textContent = labels[G.difficulty];
 }
 
-// ──────────────────────────────────────────────
-// SKELETAL RENDERING
-// ──────────────────────────────────────────────
-
-// MediaPipe Pose landmark indices
-const LM = {
-  NOSE:         0,
-  L_SHOULDER:   11, R_SHOULDER: 12,
-  L_ELBOW:      13, R_ELBOW:    14,
-  L_WRIST:      15, R_WRIST:    16,
-  L_HIP:        23, R_HIP:      24,
-  L_KNEE:       25, R_KNEE:     26,
-  L_ANKLE:      27, R_ANKLE:    28,
-};
-
-const CONNECTIONS = [
-  [LM.L_SHOULDER, LM.R_SHOULDER],
-  [LM.L_SHOULDER, LM.L_ELBOW],
-  [LM.L_ELBOW,    LM.L_WRIST],
-  [LM.R_SHOULDER, LM.R_ELBOW],
-  [LM.R_ELBOW,    LM.R_WRIST],
-  [LM.L_SHOULDER, LM.L_HIP],
-  [LM.R_SHOULDER, LM.R_HIP],
-  [LM.L_HIP,      LM.R_HIP],
-  [LM.L_HIP,      LM.L_KNEE],
-  [LM.L_KNEE,     LM.L_ANKLE],
-  [LM.R_HIP,      LM.R_KNEE],
-  [LM.R_KNEE,     LM.R_ANKLE],
-];
-
-function drawSkeleton() {
-  const W = poseCvs.width;
-  const H = poseCvs.height;
-  poseCtx.clearRect(0, 0, W, H);
-
-  if (!State.landmarks) return;
-  const lm = State.landmarks;
-
-  // Draw connections
-  poseCtx.save();
-  CONNECTIONS.forEach(([a, b]) => {
-    const pa = lm[a], pb = lm[b];
-    if (!pa || !pb) return;
-    if ((pa.visibility || 0) < 0.35 || (pb.visibility || 0) < 0.35) return;
-
-    const ax = pa.x * W, ay = pa.y * H;
-    const bx = pb.x * W, by = pb.y * H;
-
-    // Gradient per bone
-    const grad = poseCtx.createLinearGradient(ax, ay, bx, by);
-    grad.addColorStop(0, 'rgba(124,58,237,0.85)');
-    grad.addColorStop(1, 'rgba(6,182,212,0.85)');
-
-    poseCtx.beginPath();
-    poseCtx.moveTo(ax, ay);
-    poseCtx.lineTo(bx, by);
-    poseCtx.strokeStyle = grad;
-    poseCtx.lineWidth = 2.5;
-    poseCtx.lineCap = 'round';
-    poseCtx.shadowColor = 'rgba(157,92,246,0.7)';
-    poseCtx.shadowBlur = 8;
-    poseCtx.stroke();
-  });
-
-  // Draw landmark dots
-  const KEY_JOINTS = [LM.NOSE, LM.L_WRIST, LM.R_WRIST,
-    LM.L_SHOULDER, LM.R_SHOULDER, LM.L_HIP, LM.R_HIP,
-    LM.L_KNEE, LM.R_KNEE, LM.L_ANKLE, LM.R_ANKLE];
-
-  KEY_JOINTS.forEach(idx => {
-    const p = lm[idx];
-    if (!p || (p.visibility || 0) < 0.35) return;
-    const px = p.x * W, py = p.y * H;
-    const isWrist = idx === LM.L_WRIST || idx === LM.R_WRIST;
-
-    poseCtx.beginPath();
-    poseCtx.arc(px, py, isWrist ? 7 : 4, 0, Math.PI * 2);
-    poseCtx.fillStyle = isWrist ? 'rgba(255,255,255,0.95)' : 'rgba(157,92,246,0.9)';
-    poseCtx.shadowColor = isWrist ? 'rgba(255,255,255,0.9)' : 'rgba(124,58,237,0.8)';
-    poseCtx.shadowBlur  = isWrist ? 14 : 6;
-    poseCtx.fill();
-
-    if (isWrist) {
-      // Outer ring for wrists (the hitting landmarks)
-      poseCtx.beginPath();
-      poseCtx.arc(px, py, 12, 0, Math.PI * 2);
-      poseCtx.strokeStyle = 'rgba(255,255,255,0.25)';
-      poseCtx.lineWidth = 1.5;
-      poseCtx.shadowBlur = 0;
-      poseCtx.stroke();
+/* ── 3-2-1 Countdown ── */
+function runCountdown() {
+  return new Promise(res => {
+    const overlay = document.getElementById('countdown-overlay');
+    const numEl   = document.getElementById('countdown-num');
+    overlay.classList.add('visible');
+    let n = 3;
+    function tick() {
+      if (n < 0) { overlay.classList.remove('visible'); res(); return; }
+      numEl.style.animation='none';
+      void numEl.offsetWidth;
+      numEl.style.animation='countAnim 0.75s var(--ease) both';
+      numEl.textContent = n === 0 ? 'GO!' : String(n);
+      n--;
+      setTimeout(tick, 850);
     }
+    tick();
   });
-  poseCtx.restore();
 }
 
-// ──────────────────────────────────────────────
-// PARTICLE SYSTEM
-// ──────────────────────────────────────────────
-const particles = [];
+/* ══════════════════════════════════════════
+   HUD UPDATES
+══════════════════════════════════════════ */
+function updateHUD() {
+  document.getElementById('score-display').textContent = G.score;
+  document.getElementById('timer-display').textContent = Math.max(0, G.timeLeft);
+  const comboEl = document.getElementById('hud-combo');
+  document.getElementById('combo-display').textContent = `×${G.combo}`;
+  comboEl.classList.toggle('combo-active', G.combo > 1);
+}
 
-function spawnParticles(x, y, color) {
-  const COUNT = 18;
-  for (let i = 0; i < COUNT; i++) {
-    const angle = (Math.PI * 2 / COUNT) * i + Math.random() * 0.5;
-    const speed = 3 + Math.random() * 5;
+function updateStreakBar() {
+  for (let i = 0; i < STREAK_LENGTH; i++) {
+    const dot = document.getElementById(`sd${i}`);
+    if (!dot) continue;
+    dot.classList.toggle('filled', i < G.streak % (STREAK_LENGTH + 1));
+  }
+}
+
+function registerHit(points, flashType, flashText) {
+  G.hits++;
+  G.streak = Math.min(G.streak + 1, STREAK_LENGTH * 10);
+
+  // Combo logic
+  clearTimeout(G.comboResetTimer);
+  if (G.combo < 8) G.combo = Math.min(G.combo + 0.5 | 0 + (G.combo === 1 ? 1 : 0), 8);
+
+  const earned = Math.round(points * G.combo);
+  G.score += earned;
+
+  // Streak bonus every 5 hits
+  if (G.hits % STREAK_LENGTH === 0) {
+    G.score += 50 * G.combo;
+    showFeedback(`${STREAK_LENGTH} STREAK! +${50*G.combo}`, 'show-combo');
+    shakeScreen();
+  } else {
+    showFeedback(G.combo > 1 ? `+${earned}  ×${G.combo}` : `+${earned}`, flashType);
+  }
+
+  // Reset combo after idle
+  G.comboResetTimer = setTimeout(() => { G.combo = 1; updateHUD(); }, COMBO_TIMEOUT);
+  updateHUD(); updateStreakBar();
+}
+
+function registerMiss(penalty, label) {
+  G.misses++;
+  G.combo = 1;
+  G.streak = 0;
+  clearTimeout(G.comboResetTimer);
+  G.score = Math.max(0, G.score - penalty);
+  showFeedback(label, 'show-miss');
+  shakeScreen();
+  updateHUD(); updateStreakBar();
+}
+
+/* ══════════════════════════════════════════
+   VISUAL FX
+══════════════════════════════════════════ */
+let _feedbackTO = null;
+const feedbackEl = document.getElementById('feedback-flash');
+
+function showFeedback(text, cls) {
+  feedbackEl.textContent = text;
+  feedbackEl.className = '';
+  void feedbackEl.offsetWidth;
+  feedbackEl.className = cls;
+  clearTimeout(_feedbackTO);
+  _feedbackTO = setTimeout(() => {
+    feedbackEl.style.transition = 'opacity 0.35s ease';
+    feedbackEl.style.opacity    = '0';
+    setTimeout(() => {
+      feedbackEl.className = '';
+      feedbackEl.style.opacity = feedbackEl.style.transition = '';
+    }, 350);
+  }, 560);
+}
+
+function shakeScreen() {
+  const el = document.getElementById('screen-game');
+  el.classList.remove('screen-shake');
+  void el.offsetWidth;
+  el.classList.add('screen-shake');
+  setTimeout(() => el.classList.remove('screen-shake'), 380);
+}
+
+/* ── Particle System ── */
+const particles = [];
+function spawnParticles(x, y, color, count = 20) {
+  for (let i = 0; i < count; i++) {
+    const a = (Math.PI * 2 / count) * i + Math.random() * 0.6;
+    const s = 3.5 + Math.random() * 5.5;
     particles.push({
       x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      radius: 2.5 + Math.random() * 3,
+      vx: Math.cos(a) * s, vy: Math.sin(a) * s - 2,
+      r: 2.5 + Math.random() * 3,
       alpha: 1,
       color,
-      decay: 0.035 + Math.random() * 0.02,
+      decay: 0.03 + Math.random() * 0.025,
     });
   }
 }
@@ -1264,587 +1250,741 @@ function spawnParticles(x, y, color) {
 function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.18; // gravity
-    p.vx *= 0.97;
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.22; p.vx *= 0.97;
     p.alpha -= p.decay;
-    if (p.alpha <= 0) { particles.splice(i, 1); }
+    if (p.alpha <= 0) particles.splice(i, 1);
   }
 }
 
 function drawParticles() {
   particles.forEach(p => {
     gameCtx.save();
-    gameCtx.globalAlpha = p.alpha;
+    gameCtx.globalAlpha = Math.max(0, p.alpha);
     gameCtx.beginPath();
-    gameCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    gameCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     gameCtx.fillStyle = p.color;
-    gameCtx.shadowColor = p.color;
-    gameCtx.shadowBlur  = 10;
+    gameCtx.shadowColor = p.color; gameCtx.shadowBlur = 12;
     gameCtx.fill();
     gameCtx.restore();
   });
 }
 
-// ──────────────────────────────────────────────
-// COMBO FLASH
-// ──────────────────────────────────────────────
-let comboFlashTimeout = null;
-const comboFlashEl = document.getElementById('combo-flash');
-
-function showComboFlash(text, type) {
-  comboFlashEl.textContent = text;
-  comboFlashEl.className = '';
-  void comboFlashEl.offsetWidth; // reflow
-  comboFlashEl.classList.add(type);
-  clearTimeout(comboFlashTimeout);
-  comboFlashTimeout = setTimeout(() => {
-    comboFlashEl.style.transition = 'opacity 0.4s ease';
-    comboFlashEl.style.opacity = '0';
-    setTimeout(() => {
-      comboFlashEl.className = '';
-      comboFlashEl.style.opacity = '';
-      comboFlashEl.style.transition = '';
-    }, 400);
-  }, 500);
+/* ── Ripple Ring System ── */
+const ripples = [];
+function spawnRipple(x, y, color) {
+  ripples.push({ x, y, r: 8, maxR: 80, alpha: 0.9, color });
 }
 
-// ──────────────────────────────────────────────
-// RHYTHM BOXER MODE
-// ──────────────────────────────────────────────
+function updateDrawRipples() {
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const rp = ripples[i];
+    rp.r     += 5;
+    rp.alpha -= 0.045;
+    if (rp.alpha <= 0) { ripples.splice(i, 1); continue; }
+    gameCtx.save();
+    gameCtx.globalAlpha = rp.alpha;
+    gameCtx.beginPath();
+    gameCtx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+    gameCtx.strokeStyle = rp.color;
+    gameCtx.lineWidth   = 2.5;
+    gameCtx.shadowColor = rp.color; gameCtx.shadowBlur = 16;
+    gameCtx.stroke();
+    gameCtx.restore();
+  }
+}
 
-const boxerTargets = [];
-let boxerSpawnInterval = null;
-let boxerLastHitCooldown = {}; // targetId -> timestamp
+/* ══════════════════════════════════════════
+   SKELETON RENDERER
+══════════════════════════════════════════ */
+function drawSkeleton() {
+  const W = poseCvs.width, H = poseCvs.height;
+  poseCtx.clearRect(0, 0, W, H);
+  if (!G.landmarks) return;
+  const lm = G.landmarks;
 
-let _boxerIdCounter = 0;
-function spawnBoxerTarget() {
-  const W = gameCvs.width;
-  const H = gameCvs.height;
-
-  // Distribute targets across a safe zone, avoiding edges
-  const margin = 0.15;
-  const x = (margin + Math.random() * (1 - margin * 2)) * W;
-  const y = (0.15 + Math.random() * 0.55) * H;
-
-  boxerTargets.push({
-    id:          _boxerIdCounter++,
-    x, y,
-    radius:      18,          // starts small
-    maxRadius:   W * 0.11,    // grows to this
-    growRate:    W * 0.0018,  // px per frame growth
-    hit:         false,
-    hitAlpha:    0,           // for fade-out after hit
-    side:        Math.random() < 0.5 ? 'left' : 'right',
-    age:         0,
-    spawnedAt:   performance.now(),
+  poseCtx.save();
+  // Connections
+  CONNECTIONS.forEach(([a,b]) => {
+    const pa = lm[a], pb = lm[b];
+    if (!pa||!pb) return;
+    if ((pa.visibility||0)<0.35||(pb.visibility||0)<0.35) return;
+    const ax=pa.x*W, ay=pa.y*H, bx=pb.x*W, by=pb.y*H;
+    const grad = poseCtx.createLinearGradient(ax,ay,bx,by);
+    grad.addColorStop(0,'rgba(124,58,237,0.8)');
+    grad.addColorStop(1,'rgba(6,182,212,0.8)');
+    poseCtx.beginPath(); poseCtx.moveTo(ax,ay); poseCtx.lineTo(bx,by);
+    poseCtx.strokeStyle = grad; poseCtx.lineWidth = 2.5;
+    poseCtx.lineCap = 'round';
+    poseCtx.shadowColor='rgba(124,58,237,0.5)'; poseCtx.shadowBlur=8;
+    poseCtx.stroke();
   });
+
+  // Wrist rings (interactive feedback)
+  [LM.L_WRIST,LM.R_WRIST].forEach(idx => {
+    const p = lm[idx];
+    if (!p||(p.visibility||0)<0.4) return;
+    const px=p.x*W, py=p.y*H;
+    const vel = idx === LM.L_WRIST ? G.wristVel.L : G.wristVel.R;
+    const isPunching = vel > gameCvs.width * 0.012;
+    const color = idx === LM.L_WRIST ? '#a855f7' : '#22d3ee';
+
+    poseCtx.beginPath();
+    poseCtx.arc(px,py,isPunching?10:7,0,Math.PI*2);
+    poseCtx.fillStyle='rgba(255,255,255,0.95)';
+    poseCtx.shadowColor=color; poseCtx.shadowBlur=isPunching?20:10;
+    poseCtx.fill();
+
+    // Pulse ring when punching
+    if (isPunching) {
+      poseCtx.beginPath();
+      poseCtx.arc(px,py,18,0,Math.PI*2);
+      poseCtx.strokeStyle=color; poseCtx.lineWidth=2;
+      poseCtx.shadowBlur=20;
+      poseCtx.stroke();
+    } else {
+      poseCtx.beginPath();
+      poseCtx.arc(px,py,13,0,Math.PI*2);
+      poseCtx.strokeStyle=`${color.replace('#','rgba(')}80)`.replace('80)','0.3)');
+      poseCtx.strokeStyle=color+'55';
+      poseCtx.lineWidth=1.5; poseCtx.shadowBlur=0;
+      poseCtx.stroke();
+    }
+  });
+
+  // Other key joints
+  [LM.NOSE,LM.L_SHOULDER,LM.R_SHOULDER,LM.L_HIP,LM.R_HIP,
+   LM.L_KNEE,LM.R_KNEE,LM.L_ANKLE,LM.R_ANKLE].forEach(idx => {
+    const p = lm[idx];
+    if (!p||(p.visibility||0)<0.35) return;
+    poseCtx.beginPath();
+    poseCtx.arc(p.x*W,p.y*H,4,0,Math.PI*2);
+    poseCtx.fillStyle='rgba(157,92,246,0.85)';
+    poseCtx.shadowColor='rgba(124,58,237,0.6)'; poseCtx.shadowBlur=6;
+    poseCtx.fill();
+  });
+  poseCtx.restore();
 }
 
-function initBoxerMode() {
-  boxerTargets.length = 0;
-  Object.keys(boxerLastHitCooldown).forEach(k => delete boxerLastHitCooldown[k]);
-  // Spawn first target immediately
-  spawnBoxerTarget();
-  // Then spawn on a rhythm, stagger so 1-2 targets are usually on screen
-  clearInterval(boxerSpawnInterval);
-  boxerSpawnInterval = setInterval(() => {
-    if (!State.running) return;
-    if (boxerTargets.filter(t => !t.hit).length < 3) spawnBoxerTarget();
-  }, 1100);
-}
+/* ══════════════════════════════════════════
+   ─── BOXER MODE ───────────────────────
+   Improved: punch-velocity hit detection,
+   target types (jab/cross/uppercut),
+   combo system, dynamic spawn rate
+══════════════════════════════════════════ */
+const Boxer = (() => {
+  // Target types with different point values
+  const TYPES = {
+    jab:      { color:'#a855f7', glow:'rgba(168,85,247,0.6)', points:100, label:'JAB',  side:'L' },
+    cross:    { color:'#22d3ee', glow:'rgba(34,211,238,0.6)',  points:100, label:'CROSS', side:'R' },
+    hook:     { color:'#f97316', glow:'rgba(249,115,22,0.6)',  points:150, label:'HOOK',  side:'either' },
+    uppercut: { color:'#4ade80', glow:'rgba(74,222,128,0.6)',  points:200, label:'⬆ UP',  side:'either' },
+  };
 
-function updateBoxerMode() {
-  const W = gameCvs.width;
-  const H = gameCvs.height;
+  let targets = [];
+  let idCounter = 0;
+  let spawnTO = null;
 
-  // Get wrist pixel coords
-  let lWrist = null, rWrist = null;
-  if (State.landmarks) {
-    const lwLm = State.landmarks[LM.L_WRIST];
-    const rwLm = State.landmarks[LM.R_WRIST];
-    if (lwLm && (lwLm.visibility || 0) > 0.4) {
-      lWrist = { x: lwLm.x * W, y: lwLm.y * H };
-    }
-    if (rwLm && (rwLm.visibility || 0) > 0.4) {
-      rWrist = { x: rwLm.x * W, y: rwLm.y * H };
-    }
+  function getSpawnDelay() {
+    if (G.difficulty === 'hard')   return 600  + Math.random() * 400;
+    if (G.difficulty === 'medium') return 800  + Math.random() * 500;
+    return 1200 + Math.random() * 600;
   }
 
-  for (let i = boxerTargets.length - 1; i >= 0; i--) {
-    const t = boxerTargets[i];
-    t.age++;
+  function getMaxRadius() {
+    const W = gameCvs.width;
+    if (G.difficulty === 'hard')   return W * 0.08;
+    if (G.difficulty === 'medium') return W * 0.095;
+    return W * 0.11;
+  }
 
-    if (!t.hit) {
-      t.radius += t.growRate;
+  function getGrowRate() {
+    const W = gameCvs.width;
+    if (G.difficulty === 'hard')   return W * 0.0028;
+    if (G.difficulty === 'medium') return W * 0.0022;
+    return W * 0.0016;
+  }
 
-      // Check if max radius exceeded (miss)
-      if (t.radius >= t.maxRadius) {
-        State.misses++;
-        State.score = Math.max(0, State.score - 15);
-        showComboFlash('MISS!', 'flash-collision');
-        updateHUD();
-        boxerTargets.splice(i, 1);
+  function spawnTarget() {
+    if (!G.running) return;
+    const W = gameCvs.width, H = gameCvs.height;
+    const active = targets.filter(t => !t.hit).length;
+    if (active >= MAX_TARGETS_BOXER) { scheduleSpawn(); return; }
+
+    // Pick type based on difficulty
+    const pool = G.difficulty === 'easy'
+      ? ['jab','cross','jab','cross']
+      : G.difficulty === 'medium'
+      ? ['jab','cross','hook','jab','cross']
+      : ['jab','cross','hook','uppercut','hook','cross'];
+    const typeKey = pool[Math.floor(Math.random() * pool.length)];
+    const type    = TYPES[typeKey];
+
+    // Position: spread across mid-screen, avoid edges
+    const mx = 0.18 + Math.random() * 0.64;
+    const my = 0.12 + Math.random() * 0.58;
+
+    targets.push({
+      id: idCounter++,
+      x: mx * W, y: my * H,
+      radius: 14,
+      maxRadius: getMaxRadius(),
+      growRate: getGrowRate(),
+      hit: false, hitAlpha: 1,
+      hitExpandR: 0,
+      typeKey, type,
+      age: 0,
+      hitCooldown: { L: 0, R: 0 },
+    });
+    scheduleSpawn();
+  }
+
+  function scheduleSpawn() {
+    clearTimeout(spawnTO);
+    spawnTO = setTimeout(spawnTarget, getSpawnDelay());
+  }
+
+  function init() {
+    targets = [];
+    clearTimeout(spawnTO);
+    spawnTarget();
+  }
+
+  function update() {
+    const W = gameCvs.width, H = gameCvs.height;
+    const lw = G.wristCurr.L, rw = G.wristCurr.R;
+    G.frameCount++;
+
+    for (let i = targets.length - 1; i >= 0; i--) {
+      const t = targets[i];
+      t.age++;
+
+      if (t.hit) {
+        t.hitAlpha     -= 0.06;
+        t.hitExpandR   += 4.5;
+        if (t.hitAlpha <= 0) targets.splice(i, 1);
         continue;
       }
 
-      // Collision check with wrists
-      const checkWrist = (wrist, wristName) => {
-        if (!wrist) return;
+      // Grow
+      t.radius += t.growRate;
+
+      // Miss when fully expanded
+      if (t.radius >= t.maxRadius) {
+        registerMiss(20, 'MISS! -20');
+        targets.splice(i, 1);
+        scheduleSpawn();
+        continue;
+      }
+
+      // Hit detection: velocity-based punch intersects target circle
+      const checkWrist = (wrist, side) => {
+        if (!wrist) return false;
+        if (t.hitCooldown[side] > 0) { t.hitCooldown[side]--; return false; }
+
+        // Must be a real punch (velocity-based)
+        const isPunch = G.punchDetected[side];
+        if (!isPunch) return false;
+
+        // Type constraint: jab = left only, cross = right only, hook/uppercut = either
+        if (t.type.side === 'L' && side !== 'L') return false;
+        if (t.type.side === 'R' && side !== 'R') return false;
+
         const dist = Math.hypot(wrist.x - t.x, wrist.y - t.y);
-        if (dist < t.radius + 14) {
-          // Cooldown to prevent multiple hits from same target
-          const key = `${t.id}-${wristName}`;
-          const now = performance.now();
-          if (!boxerLastHitCooldown[key] || now - boxerLastHitCooldown[key] > 400) {
-            boxerLastHitCooldown[key] = now;
-            t.hit = true;
-            t.hitAlpha = 1;
-            State.hits++;
-            State.score += 100;
-            updateHUD();
-            spawnParticles(t.x, t.y, wristName === 'left' ? '#c084fc' : '#22d3ee');
-            showComboFlash('+100', 'flash-hit');
+        return dist < t.radius + 20;
+      };
+
+      const hitL = checkWrist(lw, 'L');
+      const hitR = checkWrist(rw, 'R');
+
+      if (hitL || hitR) {
+        t.hit = true;
+        const hitSide = hitL ? 'L' : 'R';
+        registerHit(t.type.points, 'show-hit', `+${t.type.points}`);
+        spawnParticles(t.x, t.y, t.type.color, 22);
+        spawnRipple(t.x, t.y, t.type.color);
+        // Consume punch so it doesn't chain-hit multiple targets in same frame
+        G.punchDetected[hitSide] = false;
+        scheduleSpawn();
+      }
+    }
+  }
+
+  function draw() {
+    const W = gameCvs.width, H = gameCvs.height;
+    targets.forEach(t => {
+      gameCtx.save();
+      const p = t.radius / t.maxRadius; // 0→1 progress (urgency)
+
+      if (!t.hit) {
+        // Outer glow pulse
+        const pulseA = 0.06 + 0.1 * Math.sin(t.age * 0.13);
+        gameCtx.beginPath();
+        gameCtx.arc(t.x, t.y, t.radius + 14, 0, Math.PI * 2);
+        gameCtx.strokeStyle = t.type.color + '40';
+        gameCtx.lineWidth = 14; gameCtx.stroke();
+
+        // Urgency fill (grows redder as time runs out)
+        const urgencyAlpha = 0.05 + p * 0.18;
+        gameCtx.beginPath();
+        gameCtx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+        gameCtx.fillStyle = hexRgba(t.type.color, urgencyAlpha + (p > 0.7 ? (p-0.7)*0.3 : 0));
+        gameCtx.fill();
+
+        // Border ring — transitions to danger colour when >70% grown
+        const borderAlpha = 0.75 + p * 0.25;
+        const borderColor = p > 0.7
+          ? lerpColor(t.type.color, '#ef4444', (p - 0.7) / 0.3)
+          : t.type.color;
+        gameCtx.beginPath();
+        gameCtx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+        gameCtx.strokeStyle = hexRgba(borderColor, borderAlpha);
+        gameCtx.lineWidth = 2.5 - p * 0.8;
+        gameCtx.shadowColor = t.type.glow; gameCtx.shadowBlur = 18;
+        gameCtx.stroke();
+
+        // Countdown arc (remaining time) — thin inner arc shrinking
+        const arcFrac = 1 - p;
+        gameCtx.beginPath();
+        gameCtx.arc(t.x, t.y, t.radius - 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * arcFrac);
+        gameCtx.strokeStyle = hexRgba(t.type.color, 0.55);
+        gameCtx.lineWidth = 3; gameCtx.shadowBlur = 0;
+        gameCtx.stroke();
+
+        // Centre icon + type label
+        if (t.radius > 28) {
+          gameCtx.font         = `bold ${Math.round(9 + p * 4)}px 'Space Grotesk',sans-serif`;
+          gameCtx.fillStyle    = hexRgba('#ffffff', 0.55 + p * 0.35);
+          gameCtx.textAlign    = 'center'; gameCtx.textBaseline = 'middle';
+          gameCtx.shadowBlur   = 0;
+          gameCtx.fillText(t.type.label, t.x, t.y);
+        }
+
+        // Wrist approach indicator — glow up when wrist is near
+        ['L','R'].forEach(side => {
+          const w = G.wristCurr[side];
+          if (!w) return;
+          const d = Math.hypot(w.x - t.x, w.y - t.y);
+          if (d < t.radius + 60 && d > t.radius) {
+            const proximity = 1 - (d - t.radius) / 60;
+            gameCtx.beginPath();
+            gameCtx.arc(t.x, t.y, t.radius + 6, 0, Math.PI * 2);
+            gameCtx.strokeStyle = hexRgba(t.type.color, proximity * 0.5);
+            gameCtx.lineWidth = 5;
+            gameCtx.shadowColor = t.type.color;
+            gameCtx.shadowBlur  = 20 * proximity;
+            gameCtx.stroke();
+          }
+        });
+
+      } else {
+        // Hit burst expand + fade
+        gameCtx.beginPath();
+        gameCtx.arc(t.x, t.y, t.radius + t.hitExpandR, 0, Math.PI * 2);
+        gameCtx.strokeStyle = hexRgba(t.type.color, t.hitAlpha * 0.8);
+        gameCtx.lineWidth = 3;
+        gameCtx.shadowColor = t.type.glow; gameCtx.shadowBlur = 24;
+        gameCtx.stroke();
+
+        gameCtx.beginPath();
+        gameCtx.arc(t.x, t.y, (t.radius + t.hitExpandR) * 0.6, 0, Math.PI * 2);
+        gameCtx.strokeStyle = hexRgba('#ffffff', t.hitAlpha * 0.4);
+        gameCtx.lineWidth = 1.5;
+        gameCtx.stroke();
+      }
+      gameCtx.restore();
+    });
+  }
+
+  function cleanup() { targets = []; clearTimeout(spawnTO); }
+
+  return { init, update, draw, cleanup };
+})();
+
+/* ══════════════════════════════════════════
+   ─── DODGE MODE ───────────────────────
+   Improved: proper head-tracking for duck
+   detection, forearm tracking, difficulty
+   ramp, speed curves, clear feedback zones
+══════════════════════════════════════════ */
+const Dodge = (() => {
+  let bars = [];
+  let idCounter = 0;
+  let spawnTO = null;
+
+  // Track player head/shoulder height (normalized 0-1 from top)
+  // Player "ducks" when this value INCREASES (moves down toward camera bottom = squat)
+  function getHeadYNorm() {
+    if (!G.landmarks) return 0.25;
+    const nose = G.landmarks[LM.NOSE];
+    const ls   = G.landmarks[LM.L_SHOULDER];
+    const rs   = G.landmarks[LM.R_SHOULDER];
+    const lh   = G.landmarks[LM.L_HIP];
+    const rh   = G.landmarks[LM.R_HIP];
+    const pts  = [nose,ls,rs].filter(l=>l&&(l.visibility||0)>0.35);
+    if (pts.length===0) return 0.25;
+    return pts.reduce((s,l)=>s+l.y,0)/pts.length;
+  }
+
+  // Hip Y for full squat detection
+  function getHipYNorm() {
+    if (!G.landmarks) return 0.5;
+    const lh = G.landmarks[LM.L_HIP];
+    const rh = G.landmarks[LM.R_HIP];
+    const pts = [lh,rh].filter(l=>l&&(l.visibility||0)>0.35);
+    if (!pts.length) return 0.5;
+    return pts.reduce((s,l)=>s+l.y,0)/pts.length;
+  }
+
+  function getSpawnDelay() {
+    if (G.difficulty==='hard')   return 900  + Math.random()*400;
+    if (G.difficulty==='medium') return 1200 + Math.random()*500;
+    return 1600 + Math.random()*700;
+  }
+
+  function getBarSpeed() {
+    const W = gameCvs.width;
+    const base = G.difficulty==='hard'   ? W*0.008
+               : G.difficulty==='medium' ? W*0.006 : W*0.004;
+    return base + Math.random() * W * 0.002;
+  }
+
+  function spawnBar() {
+    if (!G.running) return;
+    const W = gameCvs.width, H = gameCvs.height;
+    if (bars.length >= 4) { scheduleSpawn(); return; }
+
+    const fromLeft  = Math.random() < 0.5;
+
+    // Bar height choice:
+    // - "Duck bar": spans from ~55% to ~80% height — player must squat shoulders below 55% Y
+    // - "Arm bar": spans from ~20% to ~40% height — player must raise arms (boxer mode bleed, rare in dodge)
+    // - "Full bar": taller obstacle
+    const rng = Math.random();
+    let barTopNorm, barBotNorm, isDuck;
+    if (rng < 0.70) {
+      // Duck bar — most common
+      barTopNorm = 0.38 + Math.random() * 0.12; // top edge: 38%–50%
+      barBotNorm = barTopNorm + 0.18 + Math.random() * 0.12;
+      isDuck = true;
+    } else {
+      // High bar — free pass, awards points for awareness
+      barTopNorm = 0.10 + Math.random() * 0.12;
+      barBotNorm = barTopNorm + 0.12;
+      isDuck = false;
+    }
+
+    const barTopPx = barTopNorm * H;
+    const barBotPx = barBotNorm * H;
+    const speed    = fromLeft ? getBarSpeed() : -getBarSpeed();
+    const barW     = W * 0.25 + Math.random() * W * 0.12;
+
+    bars.push({
+      id: idCounter++,
+      x:          fromLeft ? -barW - 10 : W + 10,
+      barTop:     barTopPx,
+      barBot:     barBotPx,
+      barW,
+      speed,
+      fromLeft,
+      isDuck,
+      // State machine: 'incoming' → 'active' (in danger zone) → 'passed' / 'hit'
+      state:      'incoming',
+      hitFlash:   0,
+      scored:     false,
+    });
+    scheduleSpawn();
+  }
+
+  function scheduleSpawn() {
+    clearTimeout(spawnTO);
+    spawnTO = setTimeout(spawnBar, getSpawnDelay());
+  }
+
+  function init() {
+    bars = [];
+    clearTimeout(spawnTO);
+    spawnBar();
+  }
+
+  // Danger zone = center screen ± 20% width
+  function inDangerZone(bar) {
+    const W = gameCvs.width;
+    const cx = bar.x + bar.barW / 2;
+    return cx > W * 0.3 && cx < W * 0.7;
+  }
+
+  function update() {
+    const W = gameCvs.width, H = gameCvs.height;
+    const headY = getHeadYNorm();
+    const hipY  = getHipYNorm();
+
+    for (let i = bars.length - 1; i >= 0; i--) {
+      const bar = bars[i];
+      bar.x += bar.speed;
+      if (bar.hitFlash > 0) bar.hitFlash -= 0.04;
+
+      // Remove off-screen
+      const gone = bar.fromLeft ? (bar.x > W + 20) : (bar.x + bar.barW < -20);
+      if (gone) { bars.splice(i, 1); continue; }
+
+      if (bar.scored) continue;
+
+      const danger = inDangerZone(bar);
+
+      if (bar.isDuck && danger) {
+        // Collision check: player's shoulder/head Y is ABOVE bar top (they haven't ducked enough)
+        // headY is normalized; bar.barTop is pixels
+        const headYpx = headY * H;
+
+        if (headYpx < bar.barTop) {
+          // Head is above the bar — collision
+          if (bar.state !== 'hit') {
+            bar.state    = 'hit';
+            bar.hitFlash = 1;
+            bar.scored   = true;
+            registerMiss(50, 'OUCH! -50');
+          }
+        } else {
+          // Head is below bar top — player ducked!
+          if (bar.state !== 'hit') {
+            bar.state  = 'passed';
+            bar.scored = true;
+            registerHit(40, 'show-hit-cyan', '+40 DODGE!');
+            spawnParticles(W/2, bar.barTop + (bar.barBot-bar.barTop)/2, '#22d3ee', 15);
           }
         }
-      };
-      checkWrist(lWrist, 'left');
-      checkWrist(rWrist, 'right');
-
-    } else {
-      // Fade out after hit
-      t.hitAlpha -= 0.05;
-      if (t.hitAlpha <= 0) {
-        boxerTargets.splice(i, 1);
-        // Spawn replacement
-        if (State.running && boxerTargets.filter(bt => !bt.hit).length < 2) {
-          spawnBoxerTarget();
+      } else if (!bar.isDuck && danger && !bar.scored) {
+        // High bar — free points just for noticing
+        if (bar.state === 'incoming') {
+          bar.state  = 'passed';
+          bar.scored = true;
+          registerHit(15, 'show-hit-cyan', '+15');
         }
       }
     }
   }
-}
 
-function drawBoxerMode() {
-  const W = gameCvs.width;
-  const H = gameCvs.height;
+  function draw() {
+    const W = gameCvs.width, H = gameCvs.height;
+    const headY = getHeadYNorm();
+    const headYpx = headY * H;
 
-  boxerTargets.forEach(t => {
+    // ── Player height guide line ──
     gameCtx.save();
-    const progress = t.radius / t.maxRadius; // 0 → 1
+    gameCtx.beginPath(); gameCtx.setLineDash([5,8]);
+    gameCtx.moveTo(0, headYpx); gameCtx.lineTo(W, headYpx);
+    gameCtx.strokeStyle='rgba(255,255,255,0.1)';
+    gameCtx.lineWidth=1; gameCtx.stroke();
+    gameCtx.setLineDash([]);
 
-    if (!t.hit) {
-      // Pulse outer ring
-      const outerAlpha = 0.08 + 0.12 * Math.sin(t.age * 0.12);
+    // Player head indicator
+    gameCtx.beginPath();
+    gameCtx.arc(W/2, headYpx, 9, 0, Math.PI*2);
+    gameCtx.fillStyle='rgba(255,255,255,0.75)';
+    gameCtx.shadowColor='#fff'; gameCtx.shadowBlur=14;
+    gameCtx.fill();
+    gameCtx.restore();
 
-      // Outer glow ring
+    // ── Bars ──
+    bars.forEach(bar => {
+      gameCtx.save();
+      const isHit = bar.state === 'hit';
+      const isPassed = bar.state === 'passed';
+      const baseColor = !bar.isDuck ? '#22c55e'
+                      : isHit ? '#ef4444'
+                      : isPassed ? '#4ade80'
+                      : '#06b6d4';
+      const glowColor = !bar.isDuck ? 'rgba(34,197,94,0.5)'
+                      : isHit ? 'rgba(239,68,68,0.6)'
+                      : isPassed ? 'rgba(74,222,128,0.4)'
+                      : 'rgba(6,182,212,0.5)';
+
+      const alpha = isHit ? 0.55 + bar.hitFlash * 0.4 : bar.isDuck ? 0.72 : 0.45;
+      const barH  = bar.barBot - bar.barTop;
+
+      // Glow underneath
       gameCtx.beginPath();
-      gameCtx.arc(t.x, t.y, t.radius + 10, 0, Math.PI * 2);
-      gameCtx.strokeStyle = t.side === 'left'
-        ? `rgba(192,132,252,${outerAlpha})`
-        : `rgba(34,211,238,${outerAlpha})`;
-      gameCtx.lineWidth = 12;
-      gameCtx.stroke();
-
-      // Main circle border — colour shifts as it grows (urgency)
-      const r = Math.round(124 + progress * 100);
-      const g = Math.round(58  + progress * 0);
-      const b = Math.round(237 - progress * 100);
-      const baseColor  = t.side === 'left'
-        ? `rgba(${r},${g},${b},0.9)`
-        : `rgba(6,182,${212 - Math.round(progress * 80)},0.9)`;
-      const glowColor  = t.side === 'left'
-        ? `rgba(192,132,252,0.5)`
-        : `rgba(34,211,238,0.5)`;
-
-      // Circular progress fill (shows how much time is left)
-      const fillAlpha = 0.06 + progress * 0.1;
-      const fillColor = t.side === 'left'
-        ? `rgba(124,58,237,${fillAlpha})`
-        : `rgba(6,182,212,${fillAlpha})`;
-
-      gameCtx.beginPath();
-      gameCtx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
-      gameCtx.fillStyle = fillColor;
+      gameCtx.rect(bar.x, bar.barTop - 8, bar.barW, barH + 16);
+      gameCtx.fillStyle = hexRgba(baseColor, 0.04);
       gameCtx.fill();
 
-      // Border circle
+      // Bar body gradient
+      const grad = gameCtx.createLinearGradient(bar.x, bar.barTop, bar.x, bar.barBot);
+      grad.addColorStop(0, hexRgba(baseColor, alpha * 0.7));
+      grad.addColorStop(0.5, hexRgba(baseColor, alpha));
+      grad.addColorStop(1, hexRgba(baseColor, alpha * 0.7));
       gameCtx.beginPath();
-      gameCtx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
-      gameCtx.strokeStyle = baseColor;
-      gameCtx.lineWidth   = 2.5 - progress * 0.5;
-      gameCtx.shadowColor = glowColor;
-      gameCtx.shadowBlur  = 18;
-      gameCtx.stroke();
+      gameCtx.rect(bar.x, bar.barTop, bar.barW, barH);
+      gameCtx.fillStyle = grad;
+      gameCtx.shadowColor = glowColor; gameCtx.shadowBlur = 18;
+      gameCtx.fill();
 
-      // Inner crosshair
-      const cSize = Math.min(10, t.radius * 0.25);
-      gameCtx.beginPath();
-      gameCtx.moveTo(t.x - cSize, t.y);
-      gameCtx.lineTo(t.x + cSize, t.y);
-      gameCtx.moveTo(t.x, t.y - cSize);
-      gameCtx.lineTo(t.x, t.y + cSize);
-      gameCtx.strokeStyle = `rgba(255,255,255,${0.3 + progress * 0.2})`;
-      gameCtx.lineWidth   = 1.5;
-      gameCtx.shadowBlur  = 0;
-      gameCtx.stroke();
+      // Top + bottom edge lines
+      [[bar.barTop],[bar.barBot]].forEach(([y]) => {
+        gameCtx.beginPath();
+        gameCtx.moveTo(bar.x, y); gameCtx.lineTo(bar.x + bar.barW, y);
+        gameCtx.strokeStyle = hexRgba(baseColor, 0.9);
+        gameCtx.lineWidth = 2.5; gameCtx.shadowBlur = 10;
+        gameCtx.stroke();
+      });
 
-      // Hand indicator label
-      if (t.radius > 36) {
-        gameCtx.font         = `bold ${Math.round(9 + progress * 5)}px sans-serif`;
-        gameCtx.fillStyle    = `rgba(255,255,255,${0.4 + progress * 0.4})`;
+      // Danger stripe pattern on duck bars
+      if (bar.isDuck && !isPassed) {
+        const stripeW = 20;
+        for (let sx = bar.x; sx < bar.x + bar.barW; sx += stripeW * 2) {
+          gameCtx.beginPath();
+          gameCtx.rect(sx, bar.barTop, stripeW, barH);
+          gameCtx.fillStyle = 'rgba(0,0,0,0.1)';
+          gameCtx.shadowBlur = 0;
+          gameCtx.fill();
+        }
+      }
+
+      // "DUCK!" label
+      if (bar.isDuck && !bar.scored && bar.barW > 60) {
+        gameCtx.font         = 'bold 12px "Space Grotesk",sans-serif';
+        gameCtx.fillStyle    = hexRgba(baseColor, 0.9);
         gameCtx.textAlign    = 'center';
         gameCtx.textBaseline = 'middle';
         gameCtx.shadowBlur   = 0;
-        gameCtx.fillText(t.side === 'left' ? 'L' : 'R', t.x, t.y);
+        gameCtx.fillText('DUCK!', bar.x + bar.barW / 2, bar.barTop + barH / 2);
       }
 
-    } else {
-      // Hit burst ring expand + fade
-      const expandR = t.radius + (1 - t.hitAlpha) * 60;
-      gameCtx.beginPath();
-      gameCtx.arc(t.x, t.y, expandR, 0, Math.PI * 2);
-      gameCtx.strokeStyle = t.side === 'left'
-        ? `rgba(192,132,252,${t.hitAlpha * 0.6})`
-        : `rgba(34,211,238,${t.hitAlpha * 0.6})`;
-      gameCtx.lineWidth   = 3;
-      gameCtx.shadowColor = t.side === 'left' ? '#c084fc' : '#22d3ee';
-      gameCtx.shadowBlur  = 20;
-      gameCtx.stroke();
-    }
-    gameCtx.restore();
-  });
-}
-
-// ──────────────────────────────────────────────
-// BODYWEIGHT DODGE MODE
-// ──────────────────────────────────────────────
-
-const dodgeBars = [];
-let dodgeSpawnInterval = null;
-let _dodgeIdCounter    = 0;
-
-// Landmark to track: average of shoulders and nose
-function getPlayerHeightNorm() {
-  if (!State.landmarks) return 0.4; // default upper third
-  const nose = State.landmarks[LM.NOSE];
-  const ls   = State.landmarks[LM.L_SHOULDER];
-  const rs   = State.landmarks[LM.R_SHOULDER];
-  const visible = [nose, ls, rs].filter(l => l && (l.visibility || 0) > 0.35);
-  if (visible.length === 0) return 0.4;
-  return visible.reduce((sum, l) => sum + l.y, 0) / visible.length;
-}
-
-function spawnDodgeBar() {
-  const W = gameCvs.width;
-  const H = gameCvs.height;
-
-  // Bar comes from either left or right
-  const fromLeft = Math.random() < 0.5;
-  // Bar height (Y position) — random in the lower-mid area
-  // Low bars require squatting; higher bars are free passes
-  const isLow = Math.random() < 0.65; // 65% chance of a low bar (challenge)
-
-  // Low bar: player must squat. The bar's top edge is at 55-70% height
-  // High bar: top edge at 20-35% height (easy to duck under by default)
-  const barTopNorm = isLow
-    ? (0.52 + Math.random() * 0.18)
-    : (0.18 + Math.random() * 0.14);
-
-  const barHeightPx = isLow ? 36 + Math.random() * 24 : 28 + Math.random() * 16;
-  const speed       = (W * 0.005) + Math.random() * (W * 0.003);
-
-  dodgeBars.push({
-    id:         _dodgeIdCounter++,
-    x:          fromLeft ? -120 : W + 120,
-    y:          barTopNorm * H,
-    height:     barHeightPx,
-    width:      W * 0.28 + Math.random() * W * 0.1,
-    speed:      fromLeft ? speed : -speed,
-    fromLeft,
-    isLow,
-    hit:        false,
-    hitFlash:   0,
-    passed:     false,
-  });
-}
-
-function initDodgeMode() {
-  dodgeBars.length = 0;
-  spawnDodgeBar();
-  clearInterval(dodgeSpawnInterval);
-  dodgeSpawnInterval = setInterval(() => {
-    if (!State.running) return;
-    if (dodgeBars.length < 3) spawnDodgeBar();
-  }, 1600);
-}
-
-function updateDodgeMode() {
-  const W   = gameCvs.width;
-  const H   = gameCvs.height;
-  const playerY = getPlayerHeightNorm() * H;
-
-  for (let i = dodgeBars.length - 1; i >= 0; i--) {
-    const bar = dodgeBars[i];
-    bar.x += bar.speed;
-
-    // Remove off-screen bars
-    if ((bar.fromLeft && bar.x > W + 200) || (!bar.fromLeft && bar.x < -200)) {
-      if (!bar.hit) {
-        // Player dodged successfully (or bar wasn't low enough to matter)
-        if (bar.isLow && !bar.passed) {
-          State.score += 30;
-          State.hits++;
-          updateHUD();
+      // Danger zone proximity warning flash on left/right edges
+      const cx = bar.x + bar.barW / 2;
+      const W_ = gameCvs.width;
+      if (bar.isDuck && !bar.scored) {
+        const proximity = 1 - Math.abs(cx - W_/2) / (W_ * 0.5);
+        if (proximity > 0.4) {
+          gameCtx.beginPath();
+          gameCtx.rect(bar.x, bar.barTop, bar.barW, barH);
+          gameCtx.strokeStyle = hexRgba(baseColor, proximity * 0.5);
+          gameCtx.lineWidth = 1.5;
+          gameCtx.shadowColor = glowColor;
+          gameCtx.shadowBlur  = 12 * proximity;
+          gameCtx.stroke();
         }
       }
-      dodgeBars.splice(i, 1);
-      continue;
-    }
 
-    if (bar.hitFlash > 0) bar.hitFlash -= 0.05;
-
-    // Collision: only check when bar is on screen center-ish
-    // We check if the player's tracking point Y is ABOVE the bar's top (i.e., not ducked)
-    // Bar occupies [bar.y, bar.y + bar.height]
-    // Player must get their Y coordinate BELOW bar.y (i.e., squat so landmarks drop below bar top)
-    if (bar.isLow && !bar.hit && !bar.passed) {
-      const barScreenX = bar.x;
-      const barRight   = bar.x + bar.width;
-      const halfW      = W / 2;
-      const barOnScreen = barScreenX < halfW + W * 0.25 && barRight > halfW - W * 0.25;
-
-      if (barOnScreen) {
-        // Is player in collision zone?
-        const playerInBarY = playerY < bar.y + bar.height && playerY > bar.y - 60;
-
-        if (playerInBarY) {
-          // Collision!
-          if (!bar.hit) {
-            bar.hit       = true;
-            bar.hitFlash  = 1;
-            State.misses++;
-            State.score   = Math.max(0, State.score - 50);
-            updateHUD();
-            showComboFlash('HIT! -50', 'flash-collision');
-          }
-        } else if (playerY >= bar.y + bar.height && !bar.hit) {
-          // Player ducked below bar's bottom edge — count as successful dodge
-          if (!bar.passed) {
-            bar.passed   = true;
-            State.score += 30;
-            State.hits++;
-            updateHUD();
-            showComboFlash('DODGE! +30', 'flash-hit-cyan');
-          }
-        }
-      }
-    }
+      gameCtx.restore();
+    });
   }
-}
 
-function drawDodgeMode() {
-  const W = gameCvs.width;
-  const H = gameCvs.height;
-  const playerY = getPlayerHeightNorm() * H;
+  function cleanup() { bars = []; clearTimeout(spawnTO); }
 
-  // Draw subtle horizontal guide line for player
-  gameCtx.save();
-  gameCtx.beginPath();
-  gameCtx.setLineDash([6, 8]);
-  gameCtx.moveTo(0, playerY);
-  gameCtx.lineTo(W, playerY);
-  gameCtx.strokeStyle = 'rgba(255,255,255,0.12)';
-  gameCtx.lineWidth   = 1;
-  gameCtx.stroke();
-  gameCtx.setLineDash([]);
+  return { init, update, draw, cleanup };
+})();
 
-  // Draw player height indicator dot
-  gameCtx.beginPath();
-  gameCtx.arc(W / 2, playerY, 8, 0, Math.PI * 2);
-  gameCtx.fillStyle   = 'rgba(255,255,255,0.7)';
-  gameCtx.shadowColor = '#fff';
-  gameCtx.shadowBlur  = 12;
-  gameCtx.fill();
-
-  gameCtx.restore();
-
-  // Draw each bar
-  dodgeBars.forEach(bar => {
-    gameCtx.save();
-
-    const isColliding = bar.hitFlash > 0;
-    const baseColor   = bar.isLow
-      ? (isColliding ? '#ef4444' : '#06b6d4')
-      : '#22c55e';
-    const glowColor   = bar.isLow
-      ? (isColliding ? 'rgba(239,68,68,0.6)' : 'rgba(6,182,212,0.5)')
-      : 'rgba(34,197,94,0.4)';
-
-    const alpha = bar.isLow ? (0.7 + bar.hitFlash * 0.3) : 0.45;
-
-    // Bar body
-    const grad = gameCtx.createLinearGradient(bar.x, bar.y, bar.x, bar.y + bar.height);
-    grad.addColorStop(0, hexToRgba(baseColor, alpha));
-    grad.addColorStop(0.5, hexToRgba(baseColor, alpha * 1.4));
-    grad.addColorStop(1, hexToRgba(baseColor, alpha));
-
-    gameCtx.beginPath();
-    gameCtx.rect(bar.x, bar.y, bar.width, bar.height);
-    gameCtx.fillStyle   = grad;
-    gameCtx.shadowColor = glowColor;
-    gameCtx.shadowBlur  = bar.isLow ? 20 : 10;
-    gameCtx.fill();
-
-    // Top/bottom edge lines
-    gameCtx.beginPath();
-    gameCtx.moveTo(bar.x, bar.y);
-    gameCtx.lineTo(bar.x + bar.width, bar.y);
-    gameCtx.strokeStyle = hexToRgba(baseColor, 0.9);
-    gameCtx.lineWidth   = 2;
-    gameCtx.shadowBlur  = 8;
-    gameCtx.stroke();
-
-    gameCtx.beginPath();
-    gameCtx.moveTo(bar.x, bar.y + bar.height);
-    gameCtx.lineTo(bar.x + bar.width, bar.y + bar.height);
-    gameCtx.stroke();
-
-    // "DUCK!" label on dangerous low bars
-    if (bar.isLow && !bar.passed && !bar.hit && bar.width > 80) {
-      gameCtx.font         = 'bold 11px sans-serif';
-      gameCtx.fillStyle    = hexToRgba(baseColor, 0.9);
-      gameCtx.textAlign    = 'center';
-      gameCtx.textBaseline = 'middle';
-      gameCtx.shadowBlur   = 0;
-      gameCtx.fillText('DUCK!', bar.x + bar.width / 2, bar.y + bar.height / 2);
-    }
-
-    // Hazard stripe pattern
-    if (bar.isLow) {
-      gameCtx.beginPath();
-      const stripeW = 18;
-      for (let sx = bar.x; sx < bar.x + bar.width; sx += stripeW * 2) {
-        gameCtx.rect(sx, bar.y, stripeW, bar.height);
-      }
-      gameCtx.fillStyle = `rgba(0,0,0,0.12)`;
-      gameCtx.shadowBlur = 0;
-      gameCtx.fill();
-    }
-
-    gameCtx.restore();
-  });
-}
-
-// ──────────────────────────────────────────────
-// MAIN GAME LOOP
-// ──────────────────────────────────────────────
+/* ══════════════════════════════════════════
+   MAIN GAME LOOP
+══════════════════════════════════════════ */
 function gameLoop() {
-  if (!State.running && screens.game.classList.contains('active') === false) return;
   if (!screens.game.classList.contains('active')) return;
+  G.frameCount++;
 
-  const W = gameCvs.width;
-  const H = gameCvs.height;
-
-  // Clear game canvas
+  const W = gameCvs.width, H = gameCvs.height;
   gameCtx.clearRect(0, 0, W, H);
-
-  // Draw skeleton overlay
   drawSkeleton();
 
-  // Update + draw mode-specific game objects
-  if (State.running) {
-    if (State.mode === 'boxer') {
-      updateBoxerMode();
-      drawBoxerMode();
-    } else {
-      updateDodgeMode();
-      drawDodgeMode();
-    }
+  if (G.running && !G.paused) {
+    if (G.mode === 'boxer') { Boxer.update(); Boxer.draw(); }
+    else                    { Dodge.update(); Dodge.draw(); }
     updateParticles();
     drawParticles();
+    updateDrawRipples();
   }
-
   requestAnimationFrame(gameLoop);
 }
 
-// ──────────────────────────────────────────────
-// END GAME
-// ──────────────────────────────────────────────
+/* ══════════════════════════════════════════
+   END GAME
+══════════════════════════════════════════ */
 function endGame() {
-  State.running = false;
-  clearInterval(boxerSpawnInterval);
-  clearInterval(dodgeSpawnInterval);
-  boxerTargets.length = 0;
-  dodgeBars.length    = 0;
+  G.running = false;
+  clearInterval(_timerInterval);
+  Boxer.cleanup(); Dodge.cleanup();
 
   // Stop camera
-  if (cameraEngine) { try { cameraEngine.stop(); } catch(e) {} cameraEngine = null; }
+  if (cameraEngine) { try { cameraEngine.stop(); } catch{} cameraEngine = null; }
   if (video.srcObject) {
-    video.srcObject.getTracks().forEach(t => t.stop());
+    video.srcObject.getTracks().forEach(t=>t.stop());
     video.srcObject = null;
   }
-  poseReady = false;
 
-  // Compute rank
+  // Personal best
+  const bestKey = `${LOCAL_BEST_KEY}_${G.mode}`;
+  const prev    = parseInt(localStorage.getItem(bestKey) || '0', 10);
+  const isNew   = G.score > prev;
+  if (isNew) localStorage.setItem(bestKey, G.score);
+
+  const total = G.hits + G.misses;
+  const acc   = total > 0 ? Math.round((G.hits/total)*100)+'%' : '—';
+
   let rank;
-  if      (State.score >= 1500) rank = 'Legendary! 🏆';
-  else if (State.score >= 1000) rank = 'Excellent form! 🔥';
-  else if (State.score >= 600)  rank = 'Great effort! 💪';
-  else if (State.score >= 300)  rank = 'Keep training! ⚡';
-  else                          rank = 'Just warming up! 🌱';
+  if      (G.score>=2000) rank = 'Legendary! 🏆';
+  else if (G.score>=1400) rank = 'Elite form! 🔥';
+  else if (G.score>=800)  rank = 'Solid session! 💪';
+  else if (G.score>=400)  rank = 'Keep training! ⚡';
+  else                    rank = 'Just warming up! 🌱';
 
-  const total = State.hits + State.misses;
-  const acc   = total > 0 ? Math.round((State.hits / total) * 100) + '%' : '—';
+  document.getElementById('final-score').textContent   = G.score;
+  document.getElementById('final-rank').textContent    = rank;
+  document.getElementById('stat-hits').textContent     = G.hits;
+  document.getElementById('stat-misses').textContent   = G.misses;
+  document.getElementById('stat-accuracy').textContent = acc;
+  document.getElementById('go-mode-tag').textContent   = G.mode==='boxer' ? '🥊 Rhythm Boxer' : '🏋️ Dodge Rush';
 
-  document.getElementById('final-score').textContent     = State.score;
-  document.getElementById('final-rank').textContent      = rank;
-  document.getElementById('stat-hits').textContent       = State.hits;
-  document.getElementById('stat-misses').textContent     = State.misses;
-  document.getElementById('stat-accuracy').textContent   = acc;
-  document.getElementById('gameover-mode-tag').textContent =
-    State.mode === 'boxer' ? '🥊 Rhythm Boxer' : '🏋️ Bodyweight Dodge';
+  const bestLine = document.getElementById('go-best-line');
+  if (isNew) {
+    bestLine.textContent = '🏆 New Personal Best!';
+    bestLine.className   = 'go-best new-best';
+  } else {
+    bestLine.textContent = `Personal Best: ${prev}`;
+    bestLine.className   = 'go-best';
+  }
 
   showScreen('gameover');
 }
 
-function quitGame() {
-  clearInterval(gameTimerInterval);
-  endGame();
-}
+function quitGame() { clearInterval(_timerInterval); endGame(); }
+function replayGame() { showScreen('calibration'); }
 
-function replayGame() {
-  showScreen('calibration');
-}
-
-// ──────────────────────────────────────────────
-// HELPERS
-// ──────────────────────────────────────────────
-function showLoading(visible) {
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function setLoading(v) {
   const el = document.getElementById('loading-overlay');
-  if (visible) { el.classList.add('visible'); el.classList.remove('hidden'); }
-  else         { el.classList.remove('visible'); el.classList.add('hidden'); }
+  v ? (el.classList.add('visible'), el.classList.remove('hidden'))
+    : (el.classList.remove('visible'), el.classList.add('hidden'));
 }
-function setLoadingText(txt) {
-  document.getElementById('loading-text').textContent = txt;
+function setLoadingText(main, sub) {
+  document.getElementById('loading-text').textContent = main;
+  document.getElementById('loading-sub').textContent  = sub || '';
 }
 
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1,3), 16);
-  const g = parseInt(hex.slice(3,5), 16);
-  const b = parseInt(hex.slice(5,7), 16);
+function hexRgba(hex, alpha) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.slice(0,2),16);
+  const g = parseInt(h.slice(2,4),16);
+  const b = parseInt(h.slice(4,6),16);
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// ──────────────────────────────────────────────
-// BOOT
-// ──────────────────────────────────────────────
+function lerpColor(hex1, hex2, t) {
+  const h1 = hex1.replace('#',''), h2 = hex2.replace('#','');
+  const r1=parseInt(h1.slice(0,2),16), g1=parseInt(h1.slice(2,4),16), b1=parseInt(h1.slice(4,6),16);
+  const r2=parseInt(h2.slice(0,2),16), g2=parseInt(h2.slice(2,4),16), b2=parseInt(h2.slice(4,6),16);
+  const r=Math.round(r1+(r2-r1)*t), g=Math.round(g1+(g2-g1)*t), b=Math.round(b1+(b2-b1)*t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+/* ══════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════ */
 document.getElementById('cam-error').classList.remove('visible');
-resizeCanvases();
-// Ensure loading overlay is hidden on page load (it lives in the game screen)
-document.getElementById('loading-overlay').classList.remove('visible');
-document.getElementById('loading-overlay').classList.remove('hidden');
+document.getElementById('loading-overlay').classList.remove('visible','hidden');
+document.getElementById('countdown-overlay').classList.remove('visible');
 </script>
 </body>
 </html>
